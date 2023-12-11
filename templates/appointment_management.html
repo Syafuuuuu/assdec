@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Current Appointment</h1>
+<p>These are the list of exisitng appointments with all of the relevant information.</p>
+<br><br>
+<p>Records are seen below:</p>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-success" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="close">
+        <span aria-hidden="true">x</span>
+    </button>
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+
+<button type="button" class="btn btn-success  pull-right" data-toggle="modal" data-target="#myModal">
+    Add New Appointment
+</button>
+<br><br>
+
+<table class="table table-striped">
+    <tr>
+        <th>Appointment ID</th>
+        <th>Date/Time</th>
+        <th>Customer ID</th>
+        <th>Treatment ID</th>
+        <th>Action</th>
+
+    </tr>
+    {% for row in appnts %}
+    <tr>
+        <td class="texttable">{{ row.0 }}</td>
+        <td class="texttable">{{ row.1 }}</td>
+        <td class="texttable">{{ row.2 }}</td>
+        <td class="texttable">{{ row.3 }}</td>
+        <td class="texttable">
+            <script>
+                function debugHref(element) {
+                    var href = element.getAttribute("href");
+                    console.log("Debug Href:", href);
+                }
+            </script>
+            <a href='/updateApp' class="btn btn-warning btn- xs" data-toggle="modal"
+                data-target="#modaledit{{ row.0 }}">Edit</a>
+            <a href='/deleteApp/{{ row.0 }}' class="btn btn-danger btn- xs"
+                onclick="return confirm('Are You Sure For Delete?')">Delete</a>
+        </td>
+    </tr>
+
+    <div id="modaledit{{ row.0 }}" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data- dismiss="modal">x
+                    </button>
+                    <h4 class="modal-title">Update
+                        Information</h4>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('updateApp')}}" method="POST">
+                        <div class="form-group">
+                            <label>Date and Time:</label>
+                            <input type="hidden" name="id" value="{{ row.0 }}">
+                            <input type="datetime-local" id="datetime" name="datetime" value="{{ row.1 }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Customer ID:</label>
+                            <select custid="id" name="custid" value="{{ row.2 }}">
+                                {% for dataCust in dataCust %}
+                                <option value="{{ dataCust[0] }}">{{ dataCust[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Treament ID:</label>
+                            <select trmntid="id" name="trmntid" value="{{ row.3 }}">
+                                {% for dataTrmnt in dataTrmnt %}
+                                <option value="{{ dataTrmnt[0] }}">{{ dataTrmnt[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" type="submit">Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="return confirm('Are you sure?')">Cancel</button>
+                </div>
+                {% endfor %}
+</table>
+
+<div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Please Insert Data</h4>
+            </div>
+            <div class="modal-body">
+                <form action="{{url_for('insertApp')}}" method='POST'>
+                    <div class="form-group">
+                        <label>Date & Time</label>
+                        <input type="datetime-local" class="form-control" id="datetime" name="datetime" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer ID:</label>
+                        <select id="custid" name="custid" required="1">
+                            {% for dataCust in dataCust %}
+                            <option value="{{ dataCust[0] }}">{{ dataCust[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>treatment ID:</label>
+                        <select id="trmnyid" name="trmntid" required="1">
+                            {% for dataTrmnt in dataTrmnt %}
+                            <option value="{{ dataTrmnt[0] }}">{{ dataTrmnt[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">Insert Data</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" onclick="return confirm('Are you sure?')">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+{% endblock %}

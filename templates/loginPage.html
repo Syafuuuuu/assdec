@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login</title>
+    <link rel="icon" href="../static/images/asset.png">
+    <link href="{{ url_for('static', filename = 'css/bootstrap.min.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #333333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: linear-gradient(to bottom right, #4cbedd, #315ae2, #2c25ef);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            /* Increase the width by 40% */
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 300px;
+            padding: 10px;
+            border-radius: 4px;
+            transition-duration: 1s;
+        }
+
+        .form-group.noborder input {
+            border: none;
+        }
+
+        .form-group input[type="submit"] {
+            background-color: #315ae2;
+            border-color: #ffffff;
+            border-width: 2px;
+            color: white;
+            cursor: pointer;
+            font-weight: 1000;
+            transition: background-color 1s ease;
+        }
+
+        .form-group input[type="submit"]:hover {
+            color: #315ae2;
+            background-color: rgb(255, 255, 255);
+            font-weight: 1000;
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        .flexer {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flexerh {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .headText {
+            font-size: 50px;
+            font-weight: bolder;
+            color: white;
+            align-items: center;
+        }
+
+        .subtext {
+            color: white;
+        }
+
+        .dot {
+            height: 70px;
+            width: 70px;
+            background-color: #333333;
+            border-radius: 50%;
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flexer">
+        <div class="card shadow-lg p-3 mb-5 bg-white rounded">
+            <form class="flexer" action="{{url_for('login')}}" method='POST'>
+                <div class="flexerh">
+                    <div>
+                        <img src="../static/images/asset.png" alt="" style="height: 60px; padding-right: 10px;">
+                    </div>
+                    <h1 class="headText">ASSDEC</h1>
+                </div>
+                <p class="subtext">Asset Declaration System</p>
+                <div class="form-group noborder">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group noborder">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Login">
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
