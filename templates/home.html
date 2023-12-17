@@ -41,10 +41,9 @@
                     console.log("Debug Href:", href);
                 }
             </script>
-            <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs" data-toggle="modal"
-            data-target="#viewModal">View</a>
+            <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
             <a href='/updateAss' class="btn btn-warning btn- xs" data-toggle="modal"
-                data-target="#modaledit{{ row.0 }}">Edit</a>
+                data-target="">Edit</a>
             <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
                 onclick="return confirm('Are You Sure For Delete?')">Delete</a>
         </td>
@@ -141,32 +140,6 @@
                         <button class="btn btn-primary" type="submit">Add Asset</button>
                     </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Insert Info -->
-<div id="viewModal" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h1> Halo </h1>
-                {% for row in appnts %}
-                <p>{{ row.0 }}</p><br>
-                <p>{{ row.1 }}</p><br>
-                <p>{{ row.2 }}</p><br>
-                <p>{{ row.3 }}</p><br>
-                <p>{{ row.4 }}</p><br>
-
-                {% endfor %}
-                <h1>Hawooooo</h1>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

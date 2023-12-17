@@ -38,13 +38,11 @@ def index():
 #-----------View Assets-----------
 @app.route('/viewAss/<string:assID>',methods=['POST','GET'])
 def viewAss(assID):
-    print(assID)
     cur = mysql.connection.cursor()
     cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = %s """,(assID,))
     rowdata = cur.fetchone()
     cur.close
-    print(rowdata)
-    return jsonify(rowdata=rowdata)
+    return render_template('viewAss.html', rowdata=rowdata)
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST'])
