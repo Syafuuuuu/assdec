@@ -67,6 +67,37 @@ def insertAss():
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
 
+# -----------Update Assets-----------
+@app.route('/updateAss/<int:asset_id>', methods=['GET', 'POST'])
+def updateAss(asset_id):
+    if request.method == 'POST':
+        # Get the updated values from the form
+        assDecType = request.form['assType']
+        assDecCat = request.form['assCat']
+        assDec = request.form['assDec']
+        assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + ", " + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
+        assOwner = request.form['assOwner']
+        assCert = request.form['assCert']
+        assDateOwn = request.form['assDateOwn']
+        assQuantity = request.form['assQuantity']
+        assMeasurement = request.form['assMeasurement']
+        assAcqVal = request.form['assAcqVal']
+        assCurVal = request.form['assCurVal']
+        assAcq = request.form['assAcq']
+
+        # Update the asset in the database
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            UPDATE assets
+            SET AssDecType=%s, AssDecCat=%s, Description=%s, Address=%s, Owner=%s, RegCertNo=%s,
+                DateOfOwnership=%s, Quantity=%s, Measurement=%s, AssAcqVal=%s, CurrAssVal=%s, AcqMethod=%s
+            WHERE AssetID=%s
+        """, (assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, asset_id))
+
+        mysql.connection.commit()
+        flash('Data Updated Successfully')
+        return redirect(url_for('index'))
+
 #-----------Login Page-----------
 @app.route('/loginPage')
 def loginPage():
