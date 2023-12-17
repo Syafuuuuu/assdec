@@ -50,12 +50,21 @@ def viewAss(assID):
 @app.route('/insertAss', methods = ['POST'])
 def insertAss():
     if request.method == "POST":
-        id = request.form['id']
-        name = request.form['name']
-        phone = request.form['phone']
-        email = request.form['email']
+        assDecType = request.form['assType']
+        assDecCat = request.form['assCat']
+        assDec = request.form['assDec']
+        assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + ", " + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
+        assOwner = request.form['assOwner']
+        assCert = request.form['assCert']
+        assDateOwn = request.form['assDateOwn']
+        assQuantity = request.form['assQuantity']
+        assMeasurement = request.form['assMeasurement']
+        assAcqVal = request.form['assAcqVal']
+        assCurVal = request.form['assCurVal']
+        assAcq = request.form['assAcq']
+
         cur = mysql.connection.cursor()
-        cur.execute ("INSERT INTO customer (custID, custName, custPnum, custEmail) VALUES (%s, %s, %s, %s)", (id, name, phone, email))
+        cur.execute ("INSERT INTO assets (username, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq))
         mysql.connection.commit()
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
