@@ -44,7 +44,7 @@ def viewAss(assID):
     rowdata = cur.fetchone()
     cur.close
     print(rowdata)
-    return jsonify(rowdata)
+    return jsonify(rowdata=rowdata)
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST'])

@@ -158,23 +158,14 @@
             </div>
             <div class="modal-body">
                 <h1> Halo </h1>
-                <h2>
-                    <script>
-                        const fetchData = async () => {
-                            const response = await fetch("/");
-                            const data = await response.json();
-                            
-                            const dataEl = document.getElementById("data");
-                            if (data.message) {
-                                dataEl.textContent = data.message;
-                            } else {
-                                dataEl.textContent = JSON.stringify(data, null, 2);
-                            }
-                        };
-                
-                        fetchData();
-                    </script>
-                </h2>
+                {% for row in appnts %}
+                <p>{{ row.0 }}</p><br>
+                <p>{{ row.1 }}</p><br>
+                <p>{{ row.2 }}</p><br>
+                <p>{{ row.3 }}</p><br>
+                <p>{{ row.4 }}</p><br>
+
+                {% endfor %}
                 <h1>Hawooooo</h1>
             </div>
             <div class="modal-footer">
