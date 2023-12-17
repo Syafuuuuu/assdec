@@ -41,13 +41,99 @@
                     console.log("Debug Href:", href);
                 }
             </script>
-            <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
-            <a href='/updateAss' class="btn btn-warning btn- xs" data-toggle="modal"
-                data-target="">Edit</a>
+            <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs" data-toggle="modal"
+            data-target="#viewModal">View</a>
+            <a href='/updateAss/{{ row.0 }}' class="btn btn-warning btn- xs" data-toggle="modal"
+                data-target="#updateModal">Edit</a>
             <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
                 onclick="return confirm('Are You Sure For Delete?')">Delete</a>
         </td>
-    </tr>>
+    </tr>
+
+<!-- Update Info Modal -->
+<div id="updateModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Edit Asset Data</h4>
+            </div>
+            <div class="modal-body">
+                <form id="updateForm" action="{{url_for('updateAss', asset_id=0)}}" method='POST'>
+                    <!-- Add a hidden input field to store the AssetID -->
+                    <input type="hidden" id="assetID" name="assetID" value="">
+                    <input type="hidden" id="updateSubAssetType" name="assType" value="">
+                    <input type="hidden" id="updateAssCat"  name="assCat" value="">
+                    <div class="form-group">
+                        <label>Description:</label>
+                        <input type="text" id="updateAssDec" class="form-control" name="assDec" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Address:</label>
+                        <input type="text" id="updateAssAdd1" class="form-control" name="assAdd1" required="1">
+                        <input type="text" id="updateAssAdd2" class="form-control" name="assAdd2" required="1">
+                        <label>PostCode</label>
+                        <input type="text" id="updateAssPostCode" class="form-control" name="assPostCode" required="1">
+                        <label>City:</label>
+                        <input type="text" id="updateAssCity" class="form-control" name="assCity" required="1">
+                        <label>State:</label>
+                        <input type="text" id="updateAssState" class="form-control" name="assState" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Owner:</label>
+                        <select id="updateAssOwner" class="form-control" name="assOwner" required="1">
+                            <option value="Self">Self</option>
+                            <option value="Shared">Shared</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Cert No.:</label>
+                        <input type="text" id="updateAssCert" class="form-control" name="assCert" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Ownership:</label>
+                        <input type="date" id="updateAssDateOwn" class="form-control" name="assDateOwn" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <input type="number" id="updateAssQuantity" class="form-control" name="assQuantity" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Measurement:</label>
+                        <select id="updateAssMeasurement" class="form-control" name="assMeasurement" required="1">
+                            <option value="RM">Currency (RM)</option>
+                            <option value="acre">acre</option>
+                            <option value="kg">kg</option>
+                            <option value="units">units</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Asset Acquisition Value:</label>
+                        <input type="number" id="updateAssAcqVal" class="form-control" name="assAcqVal" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Asset Value (Estimate):</label>
+                        <input type="number" id="updateAssCurVal" class="form-control" name="assCurVal" required="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Acquisition Method:</label>
+                        <select id="updateAssAcq" class="form-control" name="assAcq" required="1">
+                            <option value="Self">Self</option>
+                            <option value="Shared">Shared</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">Update Asset</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
     {% endfor %}
 
 </table>
@@ -148,6 +234,41 @@
     </div>
 </div>
 
+<!-- Insert Info -->
+<div id="viewModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h1> Halo </h1>
+                <h2>
+                    <script>
+                        const fetchData = async () => {
+                            const response = await fetch("/");
+                            const data = await response.json();
+                            
+                            const dataEl = document.getElementById("data");
+                            if (data.message) {
+                                dataEl.textContent = data.message;
+                            } else {
+                                dataEl.textContent = JSON.stringify(data, null, 2);
+                            }
+                        };
+                
+                        fetchData();
+                    </script>
+                </h2>
+                <h1>Hawooooo</h1>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script>
     function updateOptions() {
@@ -181,6 +302,34 @@
     }
   }
 </script>
+
+<script>
+    // JavaScript to populate the update modal with existing data
+    function openUpdateModal(assetID, assType, assCat, assDec, assAdd1, assAdd2, assPostCode, assCity, assState, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq) {
+        // Set the values in the update modal form fields
+        document.getElementById('assetID').value = assetID;
+        document.getElementById('updateAssetType').value = assType;
+        document.getElementById('subAssetType').value = assCat; // Assuming 'subAssetType' is a select field
+        document.getElementById('assDec').value = assDec;
+        document.getElementById('assAdd1').value = assAdd1;
+        document.getElementById('assAdd2').value = assAdd2;
+        document.getElementById('assPostCode').value = assPostCode;
+        document.getElementById('assCity').value = assCity;
+        document.getElementById('assState').value = assState;
+        document.getElementById('assOwner').value = assOwner; // Assuming 'assOwner' is a select field
+        document.getElementById('assCert').value = assCert;
+        document.getElementById('assDateOwn').value = assDateOwn;
+        document.getElementById('assQuantity').value = assQuantity;
+        document.getElementById('assMeasurement').value = assMeasurement; // Assuming 'assMeasurement' is a select field
+        document.getElementById('assAcqVal').value = assAcqVal;
+        document.getElementById('assCurVal').value = assCurVal;
+        document.getElementById('assAcq').value = assAcq; // Assuming 'assAcq' is a select field
+
+        // Open the update modal
+        $('#updateModal').modal('show');
+    }
+</script>
+
 
 <script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
