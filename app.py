@@ -22,6 +22,32 @@ def start():
 
     return render_template('loginPage.html')
 
+#-----------Admin Page-----------
+@app.route('/adminPage')
+def adminPage():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT a.`AssetID`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`, u.`fullname`
+        FROM `assets` a
+        JOIN `user` u ON a.`username` = u.`username`
+    """)
+    data = cur.fetchall()
+    cur.close()
+
+    # Group assets by fullname
+    assets_by_fullname = {}
+    for row in data:
+        fullname = row[5]  # Assuming fullname is at index 5
+        if fullname not in assets_by_fullname:
+            assets_by_fullname[fullname] = []
+        assets_by_fullname[fullname].append(row)
+
+    return render_template('adminpage.html', assets_by_fullname=assets_by_fullname)
+
+
+
+
+
 #-----------Home-----------
 @app.route('/home')
 def index():
@@ -73,26 +99,99 @@ def loginPage():
 
 		return render_template('loginPage.html')
 
-#-----------Login Process-----------
 @app.route('/login', methods=['POST'])
 def login():
-      if request.method == 'POST':
-
+    if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
         cur = mysql.connection.cursor()
-        cur.execute('SELECT `username`,`password` FROM `user` WHERE `username`= %s AND `password`=%s', (username,password))
+        cur.execute('SELECT `username`,`password`,`is_admin` FROM `user` WHERE `username`= %s AND `password`=%s', (username,password))
         usr = cur.fetchone()
-    
+        cur.close()
         if usr:
             session['username'] = username
             session['Log'] = True
-
-            return redirect(url_for('index'))
+            if usr[2] == 1: # check if user is admin
+                return redirect(url_for('adminPage'))
+            else:
+                return redirect(url_for('index'))
         else:
             return '<script>alert("Incorrect username or password."); window.location="/";</script>'
+        
+#-----------Delete Asset-----------
+@app.route('/deleteAss/<string:assID>', methods=['GET'])
+def deleteAss(assID):
+    cur = mysql.connection.cursor()
 
+    # Fetch asset data before deletion for confirmation or display
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = %s AND (`username` = %s OR 1 = %s)""", (assID, session.get('username', None), session.get('is_admin', 0)))
+    rowdata = cur.fetchone()
+
+    if rowdata:
+        # Delete the asset
+        cur.execute("""DELETE FROM `assets` WHERE `AssetID` = %s""", (assID,))
+        mysql.connection.commit()
+        cur.close()
+
+        flash("Asset Deleted Successfully")
+    else:
+        flash("Error: You don't have permission to delete this asset.")
+
+    # Determine the redirect page based on the user's role
+    if session.get('is_admin', 0):
+        redirect_page = 'adminPage'
+    else:
+        redirect_page = 'index'
+
+    # Optionally, you can redirect to a page or display a confirmation message.
+    # In this example, I'm redirecting to the appropriate page based on the user's role.
+    return redirect(url_for(redirect_page))
+
+        
+#-----------LogOut User-----------
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('loginPage'))
+
+@app.route('/registerUser', methods=['GET', 'POST'])
+def registerUser():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        fullname = request.form['fullname']
+        age = request.form['age']
+        is_admin = 'is_admin' in request.form
+
+        try:
+            # Check if the username already exists
+            cur = mysql.connection.cursor()
+            cur.execute("SELECT * FROM user WHERE username = %s", (username,))
+            existing_user = cur.fetchone()
+            cur.close()
+
+            if existing_user:
+                flash("Username already exists. Please choose a different username.")
+                return redirect(url_for('registerUser'))
+
+            # Insert new user into the database
+            cur = mysql.connection.cursor()
+            cur.execute(
+                "INSERT INTO `user` (`username`, `password`, `fullname`, `age`, `is_admin`) VALUES (%s, %s, %s, %s, %s)",
+                (username, password, fullname, age, is_admin)
+            )
+            mysql.connection.commit()
+            cur.close()
+
+            flash("User Registered Successfully")
+            return redirect(url_for('registerUser'))  # Redirect to admin page after registration
+
+        except Exception as e:
+            print(f"Error during user registration: {str(e)}")
+            flash("Error during user registration. Please try again.")
+            return redirect(url_for('registerUser'))
+
+    return render_template('registeruser.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
