@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Assets Declared by Users</h1>
+<p>These are the list of existing records of the Assets declared by users with all the relevant information.</p>
+<br><br>
+<p>Records are seen below:</p>
+
+{% for fullname, assets in assets_by_fullname.items() %}
+<h2>{{ fullname }}'s Assets</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>Date of Application</th>
+            <th>Asset Declaration Type</th>
+            <th>Asset Declaration Category</th>
+            <th>Description</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in assets %}
+        <tr>
+            <td class="texttable">{{ row.0 }}</td>
+            <td class="texttable">{{ row.1 }}</td>
+            <td class="texttable">{{ row.2 }}</td>
+            <td class="texttable">{{ row.3 }}</td>
+            <td class="texttable">{{ row.4 }}</td>
+            <td class="texttable">
+                <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
+                <!-- <a href='/updateAss' class="btn btn-warning btn- xs" data-toggle="modal" data-target="">Edit</a>
+                <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
+                    onclick="return confirm('Are You Sure For Delete?')">Delete</a> -->
+            </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+            {% endfor %}
+
+
+
+<script>
+    function updateOptions() {
+        const assetType = document.getElementById('assetType').value;
+        const subAssetType = document.getElementById('subAssetType');
+
+        // Clear existing options
+        subAssetType.innerHTML = '';
+
+        // Populate options based on asset type
+        if (assetType === 'Movable') {
+            const movableAssetTypes = ['Cash/Bank Account', 'Motor Vehicles', 'Shares, Stock, Bonds and Securities', 'Jewelleries', 'Licenses and Permits', 'Other Valuables'];
+            for (const movableAssetType of movableAssetTypes) {
+                const option = document.createElement('option');
+                option.value = movableAssetType;
+                option.textContent = movableAssetType;
+
+                subAssetType.appendChild(option);
+            }
+        } else if (assetType === 'Immovable') {
+            const immovableAssetTypes = ['Land', 'Landed Property', 'Business owned by Families'];
+            for (const immovableAssetType of immovableAssetTypes) {
+                const option = document.createElement('option');
+                option.value = immovableAssetType;
+                option.textContent = immovableAssetType;
+
+                subAssetType.appendChild(option);
+            }
+        } else {
+            // No options for other asset types
+        }
+    }
+</script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+{% endblock %}
