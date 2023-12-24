@@ -114,7 +114,72 @@ def login():
                 return redirect(url_for('index'))
         else:
             return '<script>alert("Incorrect username or password."); window.location="/";</script>'
-        
+
+#-----------Update Assets-----------
+@app.route('/updateAss/<string:assID>', methods=['GET'])
+def updateAss(assID):
+    cur = mysql.connection.cursor()
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = %s AND `username` = %s""", (assID, session.get('username', None)))
+    rowdata = cur.fetchone()
+    cur.close()
+
+    # Check if the asset data is fetched
+    if not rowdata:
+        flash("Error: Asset not found or you don't have permission to update.")
+        return redirect(url_for('index'))  # Redirect to the home page or another appropriate page
+
+    # Prepare the data in a dictionary format
+    asset_data = {
+        'AssetID': rowdata[0],
+        'AssDecType': rowdata[3],
+        'AssDecCat': rowdata[4],
+        'Description': rowdata[5],
+        'Address': rowdata[6],  # You may need to split the address into parts as needed
+        'Owner': rowdata[7],
+        'RegCertNo': rowdata[8],
+        'DateOfOwnership': rowdata[8],
+        'Quantity': rowdata[10],
+        'Measurement': rowdata[11],
+        'AssAcqVal': rowdata[12],
+        'CurrAssVal': rowdata[13],
+        'AcqMethod': rowdata[14]
+    }
+
+    return render_template('updateAss.html', asset_data=asset_data)
+
+
+@app.route('/performUpdateAss/<string:assID>', methods=['POST'])
+def performUpdateAss(assID):
+    # Extract updated values from the form submission
+    assDecType = request.form['assType']
+    assDecCat = request.form['assCat']
+    assDec = request.form['assDec']
+    assAddr = request.form['assAddr']
+    assOwner = request.form['assOwner']
+    assCert = request.form['assCert']
+    assDateOwn = request.form['assDateOwn']
+    assQuantity = request.form['assQuantity']
+    assMeasurement = request.form['assMeasurement']
+    assAcqVal = request.form['assAcqVal']
+    assCurVal = request.form['assCurVal']
+    assAcq = request.form['assAcq']
+
+    # Update the corresponding asset in the database
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE `assets`
+        SET AssDecType=%s, AssDecCat=%s, Description=%s, Address=%s, Owner=%s, RegCertNo=%s,
+            DateOfOwnership=%s, Quantity=%s, Measurement=%s, AssAcqVal=%s, CurrAssVal=%s, AcqMethod=%s
+            WHERE AssetID=%s AND `username` = %s
+    """, (assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, assID, session.get('username', None)))
+    mysql.connection.commit()
+    cur.close()
+
+    flash("Asset Updated Successfully")
+
+    # Redirect to the view page for the updated asset or any other appropriate page
+    return redirect(url_for('index', assID=assID))  
+
 #-----------Delete Asset-----------
 @app.route('/deleteAss/<string:assID>', methods=['GET'])
 def deleteAss(assID):

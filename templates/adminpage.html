@@ -1,4 +1,16 @@
 {% extends 'base.html' %}
+
+{% block reg %}
+
+<li class="nav-link">
+    <a href="{{(url_for('registerUser'))}}">
+        <i class='bx bx-user-check icon'></i>
+        <span class="text nav-text">Register User</span>
+    </a>
+</li>
+
+{% endblock %}
+
 {% block content %}
 
 <h1>Assets Declared by Users</h1>
@@ -12,7 +24,7 @@
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>No.</th>
+            <th>ID</th>
             <th>Date of Application</th>
             <th>Asset Declaration Type</th>
             <th>Asset Declaration Category</th>
@@ -30,15 +42,16 @@
             <td class="texttable">{{ row.4 }}</td>
             <td class="texttable">
                 <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
-                <!-- <a href='/updateAss' class="btn btn-warning btn- xs" data-toggle="modal" data-target="">Edit</a>
+                <!-- <a href="{{url_for('updateAss', assID=row.0)}}" class="btn btn-warning btn- xs" data-toggle="modal"
+                    data-target="">Edit</a>
                 <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
                     onclick="return confirm('Are You Sure For Delete?')">Delete</a> -->
             </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-            </table>
-            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
 
 
 

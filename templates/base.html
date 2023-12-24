@@ -37,56 +37,19 @@
                         </a>
                     </li>
 
-                    <!--
-
                     <li class="nav-link">
-                        <a href="appointment_management">
-                            <i class='bx bx-time icon'></i>
-                            <span class="text nav-text">Appointment M. </span>
+                        <a href="{{(url_for('loginPage'))}}">
+                            <i class='bx bx-log-out-circle icon'></i>
+                            <span class="text nav-text">Log Out</span>
                         </a>
                     </li>
-
-                    <li class="nav-link">
-                        <a href="customer_management">
-                            <i class='bx bx-user icon'></i>
-                            <span class="text nav-text">User M.</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-link">
-                        <a href="treatment_management">
-                            <i class='bx bx-heart-circle icon'></i>
-                            <span class="text nav-text">Treatment M.</span>
-                        </a>
-                    </li>
-
+                    {% block reg %}
                     
-                    <li class="nav-link">
-                        <a href="#">
-                            <i class='bx bx-heart icon' ></i>
-                            <span class="text nav-text">Favourites</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-link">
-                        <a href="#">
-                            <i class='bx bx-wallet icon' ></i>
-                            <span class="text nav-text">Money</span>
-                        </a>
-                    </li>
-                    -->
+                    {% endblock %}
                 </ul>
             </div>
 
             <div class="bottom-content">
-                <!--
-                <li class="">
-                    <a href="#">
-                        <i class='bx bx-log-out icon' ></i>
-                        <span class="text nav-text">Logout</span>
-                    </a>
-                </li>
-                -->
 
                 <li class="mode">
                     <div class="sun-moon">
