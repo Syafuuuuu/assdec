@@ -4,6 +4,9 @@ from urllib.parse import urljoin
 
 from flask_mysqldb import MySQL
 
+UPLOAD_FOLDER = '\static\attachments'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
 app = Flask (__name__)
 app.secret_key = 'flash_message'
 
@@ -11,6 +14,7 @@ app.config ['MYSQL_HOST'] = 'localhost'
 app.config ['MYSQL_USER'] = 'root'
 app.config ['MYSQL_PASSWORD'] = ''
 app.config ['MYSQL_DB'] = 'assdec'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 mysql = MySQL(app)
 app.secret_key = "flash_message"
@@ -82,9 +86,10 @@ def insertAss():
         assAcqVal = request.form['assAcqVal']
         assCurVal = request.form['assCurVal']
         assAcq = request.form['assAcq']
+        atchmnt = request.form['file']
 
         cur = mysql.connection.cursor()
-        cur.execute ("INSERT INTO assets (username, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq))
+        cur.execute ("INSERT INTO assets (username, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, ))
         mysql.connection.commit()
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
