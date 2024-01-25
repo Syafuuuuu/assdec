@@ -1,8 +1,8 @@
 from datetime import date
 from flask import Flask, jsonify, render_template , request, redirect, session, url_for, flash, redirect
 from urllib.parse import urljoin
-
-from flask_mysqldb import MySQL
+from sqlite3 import Error
+import sqlite3
 
 UPLOAD_FOLDER = '\static\attachments'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
@@ -10,15 +10,68 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app = Flask (__name__)
 app.secret_key = 'flash_message'
 
-app.config ['MYSQL_HOST'] = 'localhost'
-app.config ['MYSQL_USER'] = 'root'
-app.config ['MYSQL_PASSWORD'] = ''
-app.config ['MYSQL_DB'] = 'assdec'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-mysql = MySQL(app)
 app.secret_key = "flash_message"
 
+#region --------------Database Start--------------------
+# --- Database Connection ----
+def create_connection():
+    conn = None
+    try:
+        conn = sqlite3.connect('static/db/user.db')  # create a database connection
+        return conn
+    except Error as e:
+        print(e)
+
+    return conn
+
+conn = create_connection()
+cur = conn.cursor()
+
+# --- Table Creation ---
+
+# - Define the table creation query -
+user_creation_query = '''
+CREATE TABLE IF NOT EXISTS user (
+email TEXT NOT NULL PRIMARY KEY,
+username TEXT NOT NULL,
+password TEXT NOT NULL,
+fullname TEXT NOT NULL,
+age INTEGER NOT NULL,
+is_admin INTEGER NOT NULL
+);
+'''
+cur.execute(user_creation_query)
+
+# - Define the table creation query -
+asset_creation_query = '''
+CREATE TABLE IF NOT EXISTS assets (
+AssetID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+Email TEXT NOT NULL,
+DateOfApp DATE NOT NULL,
+AssDecType TEXT NOT NULL,
+AssDecCat TEXT NOT NULL,
+Description TEXT NOT NULL,
+Address TEXT NOT NULL,
+Owner TEXT NOT NULL,
+RegCertNo TEXT NOT NULL,
+DateOfOwnership DATE NOT NULL,
+Quantity INTEGER NOT NULL,
+Measurement TEXT NOT NULL,
+AssAcqVAl REAL NOT NULL,
+CurrAssVal REAL NOT NULL,
+AcqMethod TEXT NOT NULL,
+Attachment TEXT NOT NULL,
+Review TEXT NOT NULL,
+Status TEXT NOT NULL
+);
+'''
+cur.execute(asset_creation_query)
+
+
+
+#endregion ----------------------------------------------
 
 #-----------Go to Login age-----------
 @app.route('/')
@@ -29,11 +82,12 @@ def start():
 #-----------Admin Page-----------
 @app.route('/adminPage')
 def adminPage():
-    cur = mysql.connection.cursor()
+    conn = create_connection()
+    cur = conn.cursor()
     cur.execute("""
         SELECT a.`AssetID`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`, u.`fullname`
         FROM `assets` a
-        JOIN `user` u ON a.`username` = u.`username`
+        JOIN `user` u ON a.`email` = u.`email`
     """)
     data = cur.fetchall()
     cur.close()
@@ -54,8 +108,9 @@ def index():
 
     user = session.get('username', None)
     print(user)
-    cur = mysql.connection.cursor()
-    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `username` = %s """,(user,))
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `email` = ? """,(user,))
     data = cur.fetchall()
     cur.close()
 
@@ -64,8 +119,9 @@ def index():
 #-----------View Assets-----------
 @app.route('/viewAss/<string:assID>',methods=['POST','GET'])
 def viewAss(assID):
-    cur = mysql.connection.cursor()
-    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = %s """,(assID,))
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? """,(assID,))
     rowdata = cur.fetchone()
     cur.close
     return render_template('viewAss.html', rowdata=rowdata)
@@ -86,11 +142,13 @@ def insertAss():
         assAcqVal = request.form['assAcqVal']
         assCurVal = request.form['assCurVal']
         assAcq = request.form['assAcq']
-        atchmnt = request.form['file']
+        attchmnt = request.form['file']
+        review = request.form['review']
 
-        cur = mysql.connection.cursor()
-        cur.execute ("INSERT INTO assets (username, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, ))
-        mysql.connection.commit()
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("INSERT INTO assets (username, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, attchmnt, "pending", review))
+        conn.commit()
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
 
@@ -104,27 +162,29 @@ def loginPage():
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['username']
         password = request.form['password']
-        cur = mysql.connection.cursor()
-        cur.execute('SELECT `username`,`password`,`is_admin` FROM `user` WHERE `username`= %s AND `password`=%s', (username,password))
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT `email`,`password`,`is_admin` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
         usr = cur.fetchone()
         cur.close()
         if usr:
-            session['username'] = username
+            session['username'] = email
             session['Log'] = True
             if usr[2] == 1: # check if user is admin
                 return redirect(url_for('adminPage'))
             else:
                 return redirect(url_for('index'))
         else:
-            return '<script>alert("Incorrect username or password."); window.location="/";</script>'
+            return '<script>alert("Incorrect email or password."); window.location="/";</script>'
 
 #-----------Update Assets-----------
 @app.route('/updateAss/<string:assID>', methods=['GET'])
 def updateAss(assID):
-    cur = mysql.connection.cursor()
-    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = %s AND `username` = %s""", (assID, session.get('username', None)))
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? AND `username` = ?""", (assID, session.get('username', None)))
     rowdata = cur.fetchone()
     cur.close()
 
@@ -170,14 +230,15 @@ def performUpdateAss(assID):
     assAcq = request.form['assAcq']
 
     # Update the corresponding asset in the database
-    cur = mysql.connection.cursor()
+    conn = create_connection()
+    cur = conn.cursor()
     cur.execute("""
         UPDATE `assets`
-        SET AssDecType=%s, AssDecCat=%s, Description=%s, Address=%s, Owner=%s, RegCertNo=%s,
-            DateOfOwnership=%s, Quantity=%s, Measurement=%s, AssAcqVal=%s, CurrAssVal=%s, AcqMethod=%s
-            WHERE AssetID=%s AND `username` = %s
+        SET AssDecType=?, AssDecCat=?, Description=?, Address=?, Owner=?, RegCertNo=?,
+            DateOfOwnership=?, Quantity=?, Measurement=?, AssAcqVal=?, CurrAssVal=?, AcqMethod=?
+            WHERE AssetID=? AND `username` = ?
     """, (assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, assID, session.get('username', None)))
-    mysql.connection.commit()
+    conn.commit()
     cur.close()
 
     flash("Asset Updated Successfully")
@@ -188,16 +249,18 @@ def performUpdateAss(assID):
 #-----------Delete Asset-----------
 @app.route('/deleteAss/<string:assID>', methods=['GET'])
 def deleteAss(assID):
-    cur = mysql.connection.cursor()
+    conn = create_connection()
+    cur = conn.cursor()
 
     # Fetch asset data before deletion for confirmation or display
-    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = %s AND (`username` = %s OR 1 = %s)""", (assID, session.get('username', None), session.get('is_admin', 0)))
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? AND (`username` = ? OR 1 = ?)""", (assID, session.get('username', None), session.get('is_admin', 0)))
     rowdata = cur.fetchone()
 
     if rowdata:
         # Delete the asset
-        cur.execute("""DELETE FROM `assets` WHERE `AssetID` = %s""", (assID,))
-        mysql.connection.commit()
+        cur.execute("""DELETE FROM `assets` WHERE `AssetID` = ?""", (assID,))
+        conn = create_connection()
+        cur = conn.cursor()
         cur.close()
 
         flash("Asset Deleted Successfully")
@@ -232,8 +295,9 @@ def registerUser():
 
         try:
             # Check if the username already exists
-            cur = mysql.connection.cursor()
-            cur.execute("SELECT * FROM user WHERE username = %s", (username,))
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM user WHERE username = ?", (username,))
             existing_user = cur.fetchone()
             cur.close()
 
@@ -242,12 +306,13 @@ def registerUser():
                 return redirect(url_for('registerUser'))
 
             # Insert new user into the database
-            cur = mysql.connection.cursor()
+            conn = create_connection()
+            cur = conn.cursor()
             cur.execute(
-                "INSERT INTO `user` (`username`, `password`, `fullname`, `age`, `is_admin`) VALUES (%s, %s, %s, %s, %s)",
+                "INSERT INTO `user` (`username`, `password`, `fullname`, `age`, `is_admin`) VALUES (?, ?, ?, ?, ?)",
                 (username, password, fullname, age, is_admin)
             )
-            mysql.connection.commit()
+            conn.commit()
             cur.close()
 
             return redirect(url_for('registerUser'))  # Redirect to admin page after registration
