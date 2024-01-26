@@ -1,11 +1,13 @@
 from datetime import date
 from flask import Flask, jsonify, render_template , request, redirect, session, url_for, flash, redirect
 from urllib.parse import urljoin
+from werkzeug.utils import secure_filename
 from sqlite3 import Error
 import sqlite3
+import os
 
 UPLOAD_FOLDER = '\static\attachments'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg'}
 
 app = Flask (__name__)
 app.secret_key = 'flash_message'
@@ -34,21 +36,30 @@ cur = conn.cursor()
 # - Define the table creation query -
 user_creation_query = '''
 CREATE TABLE IF NOT EXISTS user (
-email TEXT NOT NULL PRIMARY KEY,
-username TEXT NOT NULL,
+userID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+email TEXT NOT NULL,
 password TEXT NOT NULL,
 fullname TEXT NOT NULL,
-age INTEGER NOT NULL,
-is_admin INTEGER NOT NULL
+age INTEGER NOT NULL
 );
 '''
 cur.execute(user_creation_query)
 
 # - Define the table creation query -
+admin_creation_query = '''
+CREATE TABLE IF NOT EXISTS admin (
+adminID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+email TEXT NOT NULL,
+password TEXT NOT NULL
+);
+'''
+cur.execute(admin_creation_query)
+
+# - Define the table creation query -
 asset_creation_query = '''
 CREATE TABLE IF NOT EXISTS assets (
 AssetID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-Email TEXT NOT NULL,
+UserID INTEGER NOT NULL,
 DateOfApp DATE NOT NULL,
 AssDecType TEXT NOT NULL,
 AssDecCat TEXT NOT NULL,
@@ -87,7 +98,7 @@ def adminPage():
     cur.execute("""
         SELECT a.`AssetID`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`, u.`fullname`
         FROM `assets` a
-        JOIN `user` u ON a.`email` = u.`email`
+        JOIN `user` u ON a.`userID` = u.`userID`
     """)
     data = cur.fetchall()
     cur.close()
@@ -110,7 +121,7 @@ def index():
     print(user)
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `email` = ? """,(user,))
+    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `userID` = ? """,(user,))
     data = cur.fetchall()
     cur.close()
 
@@ -127,7 +138,7 @@ def viewAss(assID):
     return render_template('viewAss.html', rowdata=rowdata)
 
 #-----------Insert Assets-----------
-@app.route('/insertAss', methods = ['POST'])
+@app.route('/insertAss', methods = ['POST','GET'])
 def insertAss():
     if request.method == "POST":
         assDecType = request.form['assType']
@@ -142,13 +153,24 @@ def insertAss():
         assAcqVal = request.form['assAcqVal']
         assCurVal = request.form['assCurVal']
         assAcq = request.form['assAcq']
-        attchmnt = request.form['file']
-        review = request.form['review']
+        attchmnt = request.files.get('file')
+        print("Filenmae Below")
+        print(attchmnt)
+        print("filename above")
+        
+        filename = secure_filename(attchmnt.filename)
+        print("Filenmae Below")
+        print(filename)
+        print("filename above")
 
         conn = create_connection()
         cur = conn.cursor()
-        cur.execute ("INSERT INTO assets (username, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, attchmnt, "pending", review))
+        cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
         conn.commit()
+        
+        os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
+        attchmnt.save(os.path.join('static/attachment', filename))
+        
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
 
@@ -166,16 +188,19 @@ def login():
         password = request.form['password']
         conn = create_connection()
         cur = conn.cursor()
-        cur.execute('SELECT `email`,`password`,`is_admin` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
+        cur.execute('SELECT `userID`,`email`,`password` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
         usr = cur.fetchone()
+        cur.execute('SELECT `adminID`, `email`,`password` FROM `admin` WHERE `email`= ? AND `password`=?', (email,password))
+        admin = cur.fetchone()
         cur.close()
         if usr:
-            session['username'] = email
+            session['username'] = usr[0]
             session['Log'] = True
-            if usr[2] == 1: # check if user is admin
-                return redirect(url_for('adminPage'))
-            else:
-                return redirect(url_for('index'))
+            return redirect(url_for('index'))
+        elif admin:
+            session['username'] = admin[0]
+            session['Log'] = True
+            return redirect(url_for('adminPage'))
         else:
             return '<script>alert("Incorrect email or password."); window.location="/";</script>'
 
