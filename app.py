@@ -89,6 +89,36 @@ def insertAss():
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
 
+<<<<<<< Updated upstream
+=======
+#-----------Login Page-----------
+@app.route('/loginPage')
+def loginPage():
+
+		return render_template('loginPage.html')
+
+#-----------Login Process-------------------
+@app.route('/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['username']
+        password = request.form['password']
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT `email`,`password`,`is_admin` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
+        usr = cur.fetchone()
+        cur.close()
+        if usr:
+            session['username'] = email
+            session['Log'] = True
+            if usr[2] == 1: # check if user is admin
+                return redirect(url_for('adminPage'))
+            else:
+                return redirect(url_for('index'))
+        else:
+            return '<script>alert("Incorrect username or password."); window.location="/";</script>'
+
+>>>>>>> Stashed changes
 #-----------Update Assets-----------
 @app.route('/updateAss/<string:assID>', methods=['GET'])
 def updateAss(assID):
