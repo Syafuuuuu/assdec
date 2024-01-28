@@ -56,6 +56,42 @@
 
 </table>
 
+<p>Records are seen below:</p>
+
+<table class="table table-striped">
+    <tr>
+        <th>ID</th>
+        <th>Date of Application</th>
+        <th>Asset Declaration Type</th>
+        <th>Asset Declaration Category</th>
+        <th>Description</th>
+        <th>Action</th>
+    </tr>
+    {% for rows in pendingdata %}
+    <tr>
+        <td class="texttable">{{ rows.0 }}</td>
+        <td class="texttable">{{ rows.1 }}</td>
+        <td class="texttable">{{ rows.2 }}</td>
+        <td class="texttable">{{ rows.3 }}</td>
+        <td class="texttable">{{ rows.4 }}</td>
+        <td class="texttable">
+            <script>
+                function debugHref(element) {
+                    var href = element.getAttribute("href");
+                    console.log("Debug Href:", href);
+                }
+            </script>
+            <a href='/viewBuffer/{{ rows.0 }}' class="btn btn-info btn- xs">View</a>
+            <a href="{{ url_for('updateAss', assID = rows.0) }}" class="btn btn-warning btn- xs" data-toggle="modal"
+                data-target="">Edit</a>
+            <a href='/deleteAss/{{ rows.0 }}' class="btn btn-danger btn- xs"
+                onclick="return confirm('Are You Sure For Delete?')">Delete</a>
+        </td>
+    </tr>>
+    {% endfor %}
+
+</table>
+
 <button type="button" class="btn btn-success  pull-right" data-toggle="modal" data-target="#myModal">
     Add Record
 </button>
@@ -72,7 +108,8 @@
                 <form action="{{url_for('insertAss')}}" method='POST' enctype="multipart/form-data">
                     <div class="form-group">
                         <label>Asset Declaration Type:</label>
-                        <select id=assetType class="form-control" name="assType" required="1" onchange="updateOptions()">
+                        <select id=assetType class="form-control" name="assType" required="1"
+                            onchange="updateOptions()">
                             <option value="">--Choose--</option>
                             <option value="Movable">Movable</option>
                             <option value="Immovable">Immovable</option>
@@ -80,7 +117,8 @@
                     </div>
                     <div class="form-group">
                         <label>Asset Declaration Category:</label>
-                        <select id="subAssetType" for="subAssetType" class="form-control" name="assCat" required="1"></select>
+                        <select id="subAssetType" for="subAssetType" class="form-control" name="assCat"
+                            required="1"></select>
                     </div>
                     <div class="form-group">
                         <label>Description:</label>
@@ -142,7 +180,8 @@
                     </div>
                     <div class="form-group">
                         <label>Attachment (Proof):</label>
-                        <input type="file" class="form-control" name="file" required="1" enctype="multipart/form-data" accept=".txt,.pdf,.png,.jpg,.jpeg">
+                        <input type="file" class="form-control" name="file" required="1" enctype="multipart/form-data"
+                            accept=".txt,.pdf,.png,.jpg,.jpeg">
                     </div>
                     <div class="form-group">
                         <button class="btn btn-primary" type="submit">Add Asset</button>
@@ -159,39 +198,39 @@
 
 <script>
     function updateOptions() {
-    const assetType = document.getElementById('assetType').value;
-    const subAssetType = document.getElementById('subAssetType');
+        const assetType = document.getElementById('assetType').value;
+        const subAssetType = document.getElementById('subAssetType');
 
-    // Clear existing options
-    subAssetType.innerHTML = '';
+        // Clear existing options
+        subAssetType.innerHTML = '';
 
-    // Populate options based on asset type
-    if (assetType === 'Movable') {
-      const movableAssetTypes = ['Cash/Bank Account', 'Motor Vehicles', 'Shares, Stock, Bonds and Securities', 'Jewelleries', 'Licenses and Permits', 'Other Valuables'];
-      for (const movableAssetType of movableAssetTypes) {
-        const option = document.createElement('option');
-        option.value = movableAssetType;
-        option.textContent = movableAssetType;
+        // Populate options based on asset type
+        if (assetType === 'Movable') {
+            const movableAssetTypes = ['Cash/Bank Account', 'Motor Vehicles', 'Shares, Stock, Bonds and Securities', 'Jewelleries', 'Licenses and Permits', 'Other Valuables'];
+            for (const movableAssetType of movableAssetTypes) {
+                const option = document.createElement('option');
+                option.value = movableAssetType;
+                option.textContent = movableAssetType;
 
-        subAssetType.appendChild(option);
-      }
-    } else if (assetType === 'Immovable') {
-      const immovableAssetTypes = ['Land', 'Landed Property', 'Business owned by Families'];
-      for (const immovableAssetType of immovableAssetTypes) {
-        const option = document.createElement('option');
-        option.value = immovableAssetType;
-        option.textContent = immovableAssetType;
+                subAssetType.appendChild(option);
+            }
+        } else if (assetType === 'Immovable') {
+            const immovableAssetTypes = ['Land', 'Landed Property', 'Business owned by Families'];
+            for (const immovableAssetType of immovableAssetTypes) {
+                const option = document.createElement('option');
+                option.value = immovableAssetType;
+                option.textContent = immovableAssetType;
 
-        subAssetType.appendChild(option);
-      }
-    } else {
-      // No options for other asset types
+                subAssetType.appendChild(option);
+            }
+        } else {
+            // No options for other asset types
+        }
     }
-  }
 </script>
 
 <script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> 
+<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
 {% endblock %}

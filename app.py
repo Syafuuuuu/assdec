@@ -33,7 +33,7 @@ cur = conn.cursor()
 
 # --- Table Creation ---
 
-# - Define the table creation query -
+# - User Table -
 user_creation_query = '''
 CREATE TABLE IF NOT EXISTS user (
 userID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +45,7 @@ age INTEGER NOT NULL
 '''
 cur.execute(user_creation_query)
 
-# - Define the table creation query -
+# - Admin Table -
 admin_creation_query = '''
 CREATE TABLE IF NOT EXISTS admin (
 adminID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +55,7 @@ password TEXT NOT NULL
 '''
 cur.execute(admin_creation_query)
 
-# - Define the table creation query -
+# - User Asset Table -
 asset_creation_query = '''
 CREATE TABLE IF NOT EXISTS assets (
 AssetID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -80,7 +80,32 @@ Status TEXT NOT NULL
 '''
 cur.execute(asset_creation_query)
 
-
+# - Buffer Table -
+buffer_creation_query = '''
+CREATE TABLE IF NOT EXISTS buffer (
+ReviewID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+ReviewType TEXT NOT NULL,
+AssetID INTEGER,
+UserID INTEGER NOT NULL,
+DateOfApp DATE NOT NULL,
+AssDecType TEXT NOT NULL,
+AssDecCat TEXT NOT NULL,
+Description TEXT NOT NULL,
+Address TEXT NOT NULL,
+Owner TEXT NOT NULL,
+RegCertNo TEXT NOT NULL,
+DateOfOwnership DATE NOT NULL,
+Quantity INTEGER NOT NULL,
+Measurement TEXT NOT NULL,
+AssAcqVAl REAL NOT NULL,
+CurrAssVal REAL NOT NULL,
+AcqMethod TEXT NOT NULL,
+Attachment TEXT NOT NULL,
+Review TEXT NOT NULL,
+Status TEXT NOT NULL
+);
+'''
+cur.execute(buffer_creation_query)
 
 #endregion ----------------------------------------------
 
@@ -95,23 +120,28 @@ def start():
 def adminPage():
     conn = create_connection()
     cur = conn.cursor()
+    # cur.execute("""
+    #     SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`, u.`fullname`
+    #     FROM `buffer` a
+    #     JOIN `user` u ON a.`userID` = u.`userID`
+    # """)
     cur.execute("""
-        SELECT a.`AssetID`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`, u.`fullname`
-        FROM `assets` a
+        SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
+        FROM `buffer` a
         JOIN `user` u ON a.`userID` = u.`userID`
     """)
     data = cur.fetchall()
     cur.close()
 
-    # Group assets by fullname
-    assets_by_fullname = {}
-    for row in data:
-        fullname = row[5]  # Assuming fullname is at index 5
-        if fullname not in assets_by_fullname:
-            assets_by_fullname[fullname] = []
-        assets_by_fullname[fullname].append(row)
+    # # Group assets by fullname
+    # assets_by_fullname = {}
+    # for row in data:
+    #     fullname = row[5]  # Assuming fullname is at index 5
+    #     if fullname not in assets_by_fullname:
+    #         assets_by_fullname[fullname] = []
+    #     assets_by_fullname[fullname].append(row)
 
-    return render_template('adminpage.html', assets_by_fullname=assets_by_fullname)
+    return render_template('adminpage.html', review=data)
 
 #-----------Home-----------
 @app.route('/home')
@@ -123,9 +153,11 @@ def index():
     cur = conn.cursor()
     cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `userID` = ? """,(user,))
     data = cur.fetchall()
+    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `buffer` WHERE `userID` = ? """,(user,))
+    pendingdata = cur.fetchall()
     cur.close()
 
-    return render_template('home.html', appnts=data, usrnm = user)
+    return render_template('home.html', appnts=data, usrnm = user, pendingdata=pendingdata)
 
 #-----------View Assets-----------
 @app.route('/viewAss/<string:assID>',methods=['POST','GET'])
@@ -136,6 +168,16 @@ def viewAss(assID):
     rowdata = cur.fetchone()
     cur.close
     return render_template('viewAss.html', rowdata=rowdata)
+
+#-----------View Buffer-----------
+@app.route('/viewBuffer/<string:assID>',methods=['POST','GET'])
+def viewBuffer(assID):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
+    rowdata = cur.fetchone()
+    cur.close
+    return render_template('viewBuffer.html', rowdata=rowdata)
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST','GET'])
@@ -169,11 +211,19 @@ def insertAss():
         cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
         conn.commit()
         
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
+        conn.commit()
+        
         os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
         attchmnt.save(os.path.join('static/attachment', filename))
         
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
+    else:
+        return redirect(url_for ('index'))
+    
 
 #-----------Login Page-----------
 @app.route('/loginPage')
@@ -271,6 +321,48 @@ def performUpdateAss(assID):
 
     # Redirect to the view page for the updated asset or any other appropriate page
     return redirect(url_for('index', assID=assID))  
+
+#----------Approve Request---------
+@app.route('/approve/<string:appID>', methods=['POST'])
+def approve(appID):
+    print("It has eneterd")
+    # # Extract updated values from the form submission
+    # assDecType = request.form['assType']
+    # assDecCat = request.form['assCat']
+    # assDec = request.form['assDec']
+    # assAddr = request.form['assAddr']
+    # assOwner = request.form['assOwner']
+    # assCert = request.form['assCert']
+    # assDateOwn = request.form['assDateOwn']
+    # assQuantity = request.form['assQuantity']
+    # assMeasurement = request.form['assMeasurement']
+    # assAcqVal = request.form['assAcqVal']
+    # assCurVal = request.form['assCurVal']
+    # assAcq = request.form['assAcq']
+
+    # Update the corresponding asset in the database
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+    bufferData = cur.fetchone()
+    cur.close()
+    
+    print("Got the info")
+    
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", ""))
+    conn.commit()
+    cur.close()
+    
+    print("Sent info")
+    
+    
+
+    flash("Asset Updated Successfully")
+
+    # Redirect to the view page for the updated asset or any other appropriate page
+    return redirect(url_for('adminPage')) 
 
 #-----------Delete Asset-----------
 @app.route('/deleteAss/<string:assID>', methods=['GET'])
