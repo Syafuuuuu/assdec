@@ -323,7 +323,7 @@ def performUpdateAss(assID):
     return redirect(url_for('index', assID=assID))  
 
 #----------Approve Request---------
-@app.route('/approve/<string:appID>', methods=['POST'])
+@app.route('/approve/<string:appID>', methods=['POST','GET'])
 def approve(appID):
     print("It has eneterd")
     # # Extract updated values from the form submission
@@ -348,15 +348,24 @@ def approve(appID):
     cur.close()
     
     print("Got the info")
+    review = request.form['review']
     
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", ""))
+    cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review))
     conn.commit()
     cur.close()
     
     print("Sent info")
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+    conn.commit()
+    cur.close()
     
+    
+    conn = create_connection()
+    cur = conn.cursor()
     
 
     flash("Asset Updated Successfully")

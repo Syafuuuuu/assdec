@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
-    <form action="{{url_for('approve', appID=rowdata.0)}}" method='POST' enctype="multipart/form-data">
+    <form action="{{url_for('approve', appID=rowdata.0)}}" method='POST'>
         <table class="table table-striped" style="width: 100%;">
             <tr>
                 <th>Application ID</th>
@@ -71,7 +71,7 @@
             </tr>
             <tr>
                 <th>Review</th>
-                <td id="Review"><textarea id="review"  value="{{rowdata.18}}" rows="4" cols="50" placeholder=""></textarea></td>
+                <td><textarea id="review" name="review" value="{{rowdata.18}}" rows="4" cols="50" placeholder=""></textarea></td>
             </tr>
             <tr>
                 <th>Status</th>
