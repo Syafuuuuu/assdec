@@ -69,7 +69,7 @@
                 <h4 class="modal-title">Please Insert Data</h4>
             </div>
             <div class="modal-body">
-                <form action="{{url_for('insertAss')}}" method='POST'>
+                <form action="{{url_for('insertAss')}}" method='POST' enctype="multipart/form-data">
                     <div class="form-group">
                         <label>Asset Declaration Type:</label>
                         <select id=assetType class="form-control" name="assType" required="1" onchange="updateOptions()">

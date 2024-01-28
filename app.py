@@ -153,9 +153,10 @@ def insertAss():
         assAcqVal = request.form['assAcqVal']
         assCurVal = request.form['assCurVal']
         assAcq = request.form['assAcq']
-        attchmnt = request.files.get('file')
+        attchmnt = request.files['file']
         print("Filenmae Below")
         print(attchmnt)
+        print(attchmnt.filename)
         print("filename above")
         
         filename = secure_filename(attchmnt.filename)
