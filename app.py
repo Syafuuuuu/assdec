@@ -252,7 +252,6 @@ def insertAss():
     else:
         return redirect(url_for ('index'))
     
-
 #-----------Login Page-----------
 @app.route('/loginPage')
 def loginPage():
@@ -493,8 +492,6 @@ def processApp(appID,type):
         print("SHITTTTTTTTTT")
         return redirect(url_for('adminPage'))
         
-
-
 #----------Reject Request---------
 @app.route('/rejectApp/<string:appID>/<string:type>', methods=['POST','GET'])
 def rejectApp(appID,type):
@@ -570,7 +567,6 @@ def ApproveUpdate(appID):
 
     # Redirect to the view page for the updated asset or any other appropriate page
     return redirect(url_for('adminPage'))
-
 
 #-----------Delete Asset-----------
 @app.route('/deleteAss/<string:assID>', methods=['GET'])
