@@ -1,4 +1,4 @@
-{% extends 'baseAdmin.html' %}
+{% extends 'base.html' %}
 {% block content %}
 <div>
     <form action="" method='POST'>
@@ -78,9 +78,6 @@
                 <td id="Status">{{rowdata.19}}</td>
             </tr>
         </table>
-        {% if rowdata.19 == "Rejected" %}
-        heh
-        {% endif %}
     </form>
 </div>
 

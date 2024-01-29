@@ -36,21 +36,16 @@
                             <span class="text nav-text">Home</span>
                         </a>
                     </li>
-
-                    <li class="nav-link">
-                        <a href="{{(url_for('loginPage'))}}">
-                            <i class='bx bx-log-out-circle icon'></i>
-                            <span class="text nav-text">Log Out</span>
-                        </a>
-                    </li>
-                    {% block reg %}
-                    
-                    {% endblock %}
                 </ul>
             </div>
 
             <div class="bottom-content">
-
+                <li class="nav-link">
+                    <a href="{{(url_for('loginPage'))}}">
+                        <i class='bx bx-log-out-circle icon'></i>
+                        <span class="text nav-text">Log Out</span>
+                    </a>
+                </li>
                 <li class="mode">
                     <div class="sun-moon">
                         <i class='bx bx-moon icon moon'></i>
