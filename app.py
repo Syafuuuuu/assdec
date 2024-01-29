@@ -1,4 +1,6 @@
 from datetime import date
+
+import requests
 from flask import Flask, jsonify, render_template , request, redirect, session, url_for, flash, redirect
 from urllib.parse import urljoin
 from werkzeug.utils import secure_filename
@@ -262,6 +264,23 @@ def loginPage():
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
+        # Get the reCAPTCHA response from the form submission
+        recaptcha_response = request.form.get('g-recaptcha-response')
+
+        # Verify the reCAPTCHA response with the reCAPTCHA API
+        response = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={
+                'secret': '6LfWL2ApAAAAAHLENlTceAIFXsyuf7XKAjGAldU8',
+                'response': recaptcha_response
+            }
+        )
+        result = response.json()
+
+        # Check if the reCAPTCHA was successful
+        if not result['success']:
+            return redirect(url_for('loginPage'))
+
         email = request.form['username']
         password = request.form['password']
         conn = create_connection()

@@ -59,7 +59,7 @@
             color: #315ae2;
             background-color: rgb(255, 255, 255);
             font-weight: 1000;
-            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
         }
 
         .flexer {
@@ -97,30 +97,44 @@
 </head>
 
 <body>
-    <div class="flexer">
-        <div class="card shadow-lg p-3 mb-5 bg-white rounded">
-            <form class="flexer" action="{{url_for('login')}}" method='POST'>
-                <div class="flexerh">
-                    <div>
-                        <img src="../static/images/asset.png" alt="" style="height: 60px; padding-right: 10px;">
-                    </div>
-                    <h1 class="headText">ASSDEC</h1>
+<div class="flexer">
+    <div class="card shadow-lg p-3 mb-5 bg-white rounded">
+        <form class="flexer" action="{{ url_for('login') }}" method='POST' onsubmit="return validateRecaptcha();">
+            <div class="flexerh">
+                <div>
+                    <img src="../static/images/asset.png" alt="" style="height: 60px; padding-right: 10px;">
                 </div>
-                <p class="subtext">Asset Declaration System</p>
-                <div class="form-group noborder">
-                    <label for="username">Email</label>
-                    <input type="email" id="username" name="username" pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$" required>
-                </div>
-                <div class="form-group noborder">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <div class="form-group">
-                    <input type="submit" value="Login">
-                </div>
-            </form>
-        </div>
+                <h1 class="headText">ASSDEC</h1>
+            </div>
+            <p class="subtext">Asset Declaration System</p>
+            <div class="form-group noborder">
+                <label for="username">Email</label>
+                <input type="email" id="username" name="username" pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                       required>
+            </div>
+            <div class="form-group noborder">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="g-recaptcha" data-sitekey="6LfWL2ApAAAAADv2OKjpeahBXoYOM60EEJIWyWWL"></div>
+            <div class="form-group">
+                <input type="submit" value="Login">
+            </div>
+
+        </form>
     </div>
+</div>
 </body>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+    function validateRecaptcha() {
+        var response = grecaptcha.getResponse();
+        if (response.length === 0) {
+            alert("Please tick the reCAPTCHA box.");
+            return false;
+        }
+        return true;
+    }
+</script>
 
 </html>
