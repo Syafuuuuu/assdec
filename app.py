@@ -161,7 +161,7 @@ def index():
     cur = conn.cursor()
     cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `userID` = ? """,(user,))
     data = cur.fetchall()
-    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `buffer` WHERE `userID` = ? AND `Status` = "Pending" """,(user,))
+    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `buffer` WHERE `userID` = ? AND (`Status` = "Pending" OR `Status` = "Rejected") """,(user,))
     pendingdata = cur.fetchall()
     cur.close()
 
@@ -358,104 +358,181 @@ def performUpdateAss(assID):
     return redirect(url_for('index', assID=assID))  
 
 #----------Approve Request---------
-@app.route('/approve/<string:appID>/<string:type>', methods=['POST','GET'])
-def approve(appID,type):
+@app.route('/processApp/<string:appID>/<string:type>', methods=['POST','GET'])
+def processApp(appID,type):
     print("It has eneterd")
 
-    if(type=="Addition"):
+    if(request.form['action']=="Approve"):
+        if(type=="Addition"):
 
-        # Update the corresponding asset in the database
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
-        bufferData = cur.fetchone()
-        cur.close()
-    
-        print("Got the info")
-        review = request.form['review']
-    
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review))
-        conn.commit()
-        cur.close()
-    
-        print("Sent info")
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
-        conn.commit()
-        cur.close()
-    
-    
-        conn = create_connection()
-        cur = conn.cursor()
-    
-
-        flash("Asset Added Successfully")
-
-        # Redirect to the view page for the updated asset or any other appropriate page
-        return redirect(url_for('adminPage')) 
-
-    elif(type=="Edit"):
-        # Update the corresponding asset in the database
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
-        bufferData = cur.fetchone()
-        cur.close()
-    
-        print("Got the info")
-        review = request.form['review']
-    
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("UPDATE assets SET userID = ?, dateOfApp = ?, AssDecType = ?, AssDecCat = ?, Description = ?, Address = ?, Owner = ?, RegCertNo = ?, DateOfOwnership = ?, Quantity = ?, Measurement = ?, AssAcqVal = ?, CurrAssVal = ?, AcqMethod = ?, attachment = ?, status = ?, review = ? WHERE AssetID = ?", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review, bufferData[2]))
-        conn.commit()
-        cur.close()
-    
-        print("Sent info")
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
-        conn.commit()
-        cur.close()
-
-        flash("Asset Updated Successfully")
-
-        # Redirect to the view page for the updated asset or any other appropriate page
-        return redirect(url_for('adminPage'))
-    elif(type=="Deletion"):
+            # Update the corresponding asset in the database
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+            bufferData = cur.fetchone()
+            cur.close()
         
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
-        bufferData = cur.fetchone()
-        cur.close()
+            print("Got the info")
+            review = request.form['review']
         
-        print("Got the info")
-        review = request.form['review']
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review))
+            conn.commit()
+            cur.close()
         
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("DELETE FROM assets WHERE assetID = ?", (bufferData[2],))
-        conn.commit()
-        cur.close()
-    
-        print("Sent info")
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
-        conn.commit()
-        cur.close()
+            print("Sent info")
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+            conn.commit()
+            cur.close()
         
-        return redirect(url_for('adminPage'))
+        
+            conn = create_connection()
+            cur = conn.cursor()
+        
+
+            flash("Asset Added Successfully")
+
+            # Redirect to the view page for the updated asset or any other appropriate page
+            return redirect(url_for('adminPage')) 
+
+        elif(type=="Edit"):
+            # Update the corresponding asset in the database
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+            bufferData = cur.fetchone()
+            cur.close()
+        
+            print("Got the info")
+            review = request.form['review']
+        
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("UPDATE assets SET userID = ?, dateOfApp = ?, AssDecType = ?, AssDecCat = ?, Description = ?, Address = ?, Owner = ?, RegCertNo = ?, DateOfOwnership = ?, Quantity = ?, Measurement = ?, AssAcqVal = ?, CurrAssVal = ?, AcqMethod = ?, attachment = ?, status = ?, review = ? WHERE AssetID = ?", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review, bufferData[2]))
+            conn.commit()
+            cur.close()
+        
+            print("Sent info")
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+            conn.commit()
+            cur.close()
+
+            flash("Asset Updated Successfully")
+
+            # Redirect to the view page for the updated asset or any other appropriate page
+            return redirect(url_for('adminPage'))
+        elif(type=="Deletion"):
+            
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+            bufferData = cur.fetchone()
+            cur.close()
+            
+            print("Got the info")
+            review = request.form['review']
+            
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("DELETE FROM assets WHERE assetID = ?", (bufferData[2],))
+            conn.commit()
+            cur.close()
+        
+            print("Sent info")
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+            conn.commit()
+            cur.close()
+            
+            return redirect(url_for('adminPage'))
+        else:
+            flash("Something went wrong")
+            print("SHITTTTTTTTTT")
+            return redirect(url_for('adminPage'))
+    if(request.form['action']=="Reject"):
+        if(type=="Addition" or type=="Edit" or type=="Deletion"):
+
+            # Update the corresponding asset in the database
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+            bufferData = cur.fetchone()
+            cur.close()
+        
+            print("Got the info")
+            review = request.form['review']
+        
+            print("Sent info")
+            conn = create_connection()
+            cur = conn.cursor()
+            cur.execute ("UPDATE buffer SET Status = ?, review =? where ReviewID = ?", ("Rejected", review, appID))
+            conn.commit()
+            cur.close()
+        
+        
+            conn = create_connection()
+            cur = conn.cursor()
+        
+
+            flash("Asset Reviewed Successfully")
+
+            # Redirect to the view page for the updated asset or any other appropriate page
+            return redirect(url_for('adminPage')) 
+
+        else:
+            flash("Something went wrong")
+            print("SHITTTTTTTTTT")
+            return redirect(url_for('adminPage'))
     else:
         flash("Something went wrong")
         print("SHITTTTTTTTTT")
         return redirect(url_for('adminPage'))
+        
 
 
+#----------Reject Request---------
+@app.route('/rejectApp/<string:appID>/<string:type>', methods=['POST','GET'])
+def rejectApp(appID,type):
+    print("It has eneterd")
+    if(type=="Addition" or type=="Edit" or type=="Deletion"):
+
+        # Update the corresponding asset in the database
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+        bufferData = cur.fetchone()
+        cur.close()
+    
+        print("Got the info")
+        review = request.form['review']
+    
+        print("Sent info")
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("UPDATE buffer SET Status = ?, review =? where ReviewID = ?", ("Rejected", review, appID))
+        conn.commit()
+        cur.close()
+    
+    
+        conn = create_connection()
+        cur = conn.cursor()
+    
+
+        flash("Asset Reviewed Successfully")
+
+        # Redirect to the view page for the updated asset or any other appropriate page
+        return redirect(url_for('adminPage')) 
+
+    else:
+        flash("Something went wrong")
+        print("SHITTTTTTTTTT")
+        return redirect(url_for('adminPage'))
 
 #----------Approve Update----------
 @app.route('/ApproveUpdate/<string:appID>', methods=['POST'])

@@ -1,7 +1,7 @@
 {% extends 'baseAdmin.html' %}
 {% block content %}
 <div>
-    <form action="{{url_for('approve', appID=rowdata.0, type=rowdata.1)}}" method='POST'>
+    <form action="{{url_for('processApp', appID=rowdata.0, type=rowdata.1)}}" method='POST'>
         <table class="table table-striped" style="width: 100%;">
             <tr>
                 <th>Application ID</th>
@@ -71,15 +71,18 @@
             </tr>
             <tr>
                 <th>Review</th>
-                <td><textarea id="review" name="review" value="{{rowdata.18}}" rows="4" cols="50" placeholder="">{{rowdata.18}}</textarea></td>
+                <td><textarea id="review" name="review" value="{{rowdata.18}}" rows="4" cols="50" placeholder="" required="1">{{rowdata.18}}</textarea></td>
             </tr>
             <tr>
                 <th>Status</th>
                 <td id="Status">{{rowdata.19}}</td>
             </tr>
         </table>
-        <button type="submit" class="btn btn-success  pull-right">
+        <button type="submit" name="action" class="btn btn-success  pull-right" value="Approve">
             Approve
+        </button>
+        <button type="submit" name="action" class="btn btn-Danger  pull-right" value="Reject">
+            Reject
         </button>
     </form>
 </div>

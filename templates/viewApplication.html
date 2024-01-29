@@ -1,7 +1,7 @@
 {% extends 'baseAdmin.html' %}
 {% block content %}
 <div>
-    <form action="{{url_for('approve', appID=rowdata.0, type=rowdata.1)}}" method='POST'>
+    <form action="" method='POST'>
         <table class="table table-striped" style="width: 100%;">
             <tr>
                 <th>Application ID</th>
@@ -78,9 +78,6 @@
                 <td id="Status">{{rowdata.19}}</td>
             </tr>
         </table>
-        <button type="submit" class="btn btn-success  pull-right">
-            Approve
-        </button>
     </form>
 </div>
 
