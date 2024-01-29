@@ -129,8 +129,16 @@ def adminPage():
         SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
         FROM `buffer` a
         JOIN `user` u ON a.`userID` = u.`userID`
+        WHERE a.`Status` = "Pending"
     """)
-    data = cur.fetchall()
+    pending = cur.fetchall()
+    cur.execute("""
+        SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
+        FROM `buffer` a
+        JOIN `user` u ON a.`userID` = u.`userID`
+        WHERE a.`Status` = "Approved"
+    """)
+    completed = cur.fetchall()
     cur.close()
 
     # # Group assets by fullname
@@ -141,7 +149,7 @@ def adminPage():
     #         assets_by_fullname[fullname] = []
     #     assets_by_fullname[fullname].append(row)
 
-    return render_template('adminpage.html', review=data)
+    return render_template('adminpage.html', review=pending, completed=completed)
 
 #-----------Home-----------
 @app.route('/home')
@@ -153,7 +161,7 @@ def index():
     cur = conn.cursor()
     cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `userID` = ? """,(user,))
     data = cur.fetchall()
-    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `buffer` WHERE `userID` = ? """,(user,))
+    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `buffer` WHERE `userID` = ? AND `Status` = "Pending" """,(user,))
     pendingdata = cur.fetchall()
     cur.close()
 
@@ -178,6 +186,26 @@ def viewBuffer(assID):
     rowdata = cur.fetchone()
     cur.close
     return render_template('viewBuffer.html', rowdata=rowdata)
+
+#-----------View Buffer-----------
+@app.route('/viewComplete/<string:assID>',methods=['POST','GET'])
+def viewComplete(assID):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
+    rowdata = cur.fetchone()
+    cur.close
+    return render_template('viewComplete.html', rowdata=rowdata)
+
+#-----------View Application-----------
+@app.route('/viewApplication/<string:assID>',methods=['POST','GET'])
+def viewApplciation(assID):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
+    rowdata = cur.fetchone()
+    cur.close
+    return render_template('viewApplication.html', rowdata=rowdata)
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST','GET'])
@@ -206,14 +234,14 @@ def insertAss():
         print(filename)
         print("filename above")
 
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
-        conn.commit()
+        # conn = create_connection()
+        # cur = conn.cursor()
+        # cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
+        # conn.commit()
         
         conn = create_connection()
         cur = conn.cursor()
-        cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
+        cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
         conn.commit()
         
         os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
@@ -247,10 +275,12 @@ def login():
         if usr:
             session['username'] = usr[0]
             session['Log'] = True
+            session['userType'] = "user"
             return redirect(url_for('index'))
         elif admin:
             session['username'] = admin[0]
             session['Log'] = True
+            session['userType'] = "admin"
             return redirect(url_for('adminPage'))
         else:
             return '<script>alert("Incorrect email or password."); window.location="/";</script>'
@@ -260,7 +290,7 @@ def login():
 def updateAss(assID):
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? AND `username` = ?""", (assID, session.get('username', None)))
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? AND `userID` = ?""", (assID, session.get('username', None)))
     rowdata = cur.fetchone()
     cur.close()
 
@@ -283,7 +313,11 @@ def updateAss(assID):
         'Measurement': rowdata[11],
         'AssAcqVal': rowdata[12],
         'CurrAssVal': rowdata[13],
-        'AcqMethod': rowdata[14]
+        'AcqMethod': rowdata[14],
+        'Attachment': rowdata[15],
+        'Review': rowdata[16],
+        'Status': rowdata[17]
+        
     }
 
     return render_template('updateAss.html', asset_data=asset_data)
@@ -304,18 +338,19 @@ def performUpdateAss(assID):
     assAcqVal = request.form['assAcqVal']
     assCurVal = request.form['assCurVal']
     assAcq = request.form['assAcq']
+    attachment = request.files['attachment']
+    filename = secure_filename(attachment.filename)
+    review = request.form['review']
+    status = "Pending"
 
     # Update the corresponding asset in the database
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE `assets`
-        SET AssDecType=?, AssDecCat=?, Description=?, Address=?, Owner=?, RegCertNo=?,
-            DateOfOwnership=?, Quantity=?, Measurement=?, AssAcqVal=?, CurrAssVal=?, AcqMethod=?
-            WHERE AssetID=? AND `username` = ?
-    """, (assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, assID, session.get('username', None)))
+    cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Edit", assID, session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, status, review))
     conn.commit()
-    cur.close()
+        
+    os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
+    attachment.save(os.path.join('static/attachment', filename))
 
     flash("Asset Updated Successfully")
 
@@ -323,23 +358,108 @@ def performUpdateAss(assID):
     return redirect(url_for('index', assID=assID))  
 
 #----------Approve Request---------
-@app.route('/approve/<string:appID>', methods=['POST','GET'])
-def approve(appID):
+@app.route('/approve/<string:appID>/<string:type>', methods=['POST','GET'])
+def approve(appID,type):
     print("It has eneterd")
-    # # Extract updated values from the form submission
-    # assDecType = request.form['assType']
-    # assDecCat = request.form['assCat']
-    # assDec = request.form['assDec']
-    # assAddr = request.form['assAddr']
-    # assOwner = request.form['assOwner']
-    # assCert = request.form['assCert']
-    # assDateOwn = request.form['assDateOwn']
-    # assQuantity = request.form['assQuantity']
-    # assMeasurement = request.form['assMeasurement']
-    # assAcqVal = request.form['assAcqVal']
-    # assCurVal = request.form['assCurVal']
-    # assAcq = request.form['assAcq']
 
+    if(type=="Addition"):
+
+        # Update the corresponding asset in the database
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+        bufferData = cur.fetchone()
+        cur.close()
+    
+        print("Got the info")
+        review = request.form['review']
+    
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review))
+        conn.commit()
+        cur.close()
+    
+        print("Sent info")
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+        conn.commit()
+        cur.close()
+    
+    
+        conn = create_connection()
+        cur = conn.cursor()
+    
+
+        flash("Asset Added Successfully")
+
+        # Redirect to the view page for the updated asset or any other appropriate page
+        return redirect(url_for('adminPage')) 
+
+    elif(type=="Edit"):
+        # Update the corresponding asset in the database
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+        bufferData = cur.fetchone()
+        cur.close()
+    
+        print("Got the info")
+        review = request.form['review']
+    
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("UPDATE assets SET userID = ?, dateOfApp = ?, AssDecType = ?, AssDecCat = ?, Description = ?, Address = ?, Owner = ?, RegCertNo = ?, DateOfOwnership = ?, Quantity = ?, Measurement = ?, AssAcqVal = ?, CurrAssVal = ?, AcqMethod = ?, attachment = ?, status = ?, review = ? WHERE AssetID = ?", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review, bufferData[2]))
+        conn.commit()
+        cur.close()
+    
+        print("Sent info")
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+        conn.commit()
+        cur.close()
+
+        flash("Asset Updated Successfully")
+
+        # Redirect to the view page for the updated asset or any other appropriate page
+        return redirect(url_for('adminPage'))
+    elif(type=="Deletion"):
+        
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+        bufferData = cur.fetchone()
+        cur.close()
+        
+        print("Got the info")
+        review = request.form['review']
+        
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("DELETE FROM assets WHERE assetID = ?", (bufferData[2],))
+        conn.commit()
+        cur.close()
+    
+        print("Sent info")
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
+        conn.commit()
+        cur.close()
+        
+        return redirect(url_for('adminPage'))
+    else:
+        flash("Something went wrong")
+        print("SHITTTTTTTTTT")
+        return redirect(url_for('adminPage'))
+
+
+
+#----------Approve Update----------
+@app.route('/ApproveUpdate/<string:appID>', methods=['POST'])
+def ApproveUpdate(appID):
     # Update the corresponding asset in the database
     conn = create_connection()
     cur = conn.cursor()
@@ -352,7 +472,7 @@ def approve(appID):
     
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review))
+    cur.execute ("UPDATE assets SET userID = ?, dateOfApp = ?, AssDecType = ?, AssDecCat = ?, Description = ?, Address = ?, Owner = ?, RegCertNo = ?, DateOfOwnership = ?, Quantity = ?, Measurement = ?, AssAcqVal = ?, CurrAssVal = ?, AcqMethod = ?, attachment = ?, status = ?, review = ? WHERE AssetID = ?", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review, bufferData[2]))
     conn.commit()
     cur.close()
     
@@ -370,8 +490,11 @@ def approve(appID):
 
     flash("Asset Updated Successfully")
 
+    flash("Asset Updated Successfully")
+
     # Redirect to the view page for the updated asset or any other appropriate page
-    return redirect(url_for('adminPage')) 
+    return redirect(url_for('adminPage'))
+
 
 #-----------Delete Asset-----------
 @app.route('/deleteAss/<string:assID>', methods=['GET'])
@@ -380,13 +503,16 @@ def deleteAss(assID):
     cur = conn.cursor()
 
     # Fetch asset data before deletion for confirmation or display
-    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? AND (`username` = ? OR 1 = ?)""", (assID, session.get('username', None), session.get('is_admin', 0)))
+    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? AND `userID` = ?""", (assID, session.get('username', None)))
     rowdata = cur.fetchone()
 
     if rowdata:
         # Delete the asset
-        cur.execute("""DELETE FROM `assets` WHERE `AssetID` = ?""", (assID,))
-        conn = create_connection()
+        # Update the corresponding asset in the database
+        cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Deletion", assID, session.get('username', None), rowdata[2], rowdata[3], rowdata[4], rowdata[5], rowdata[6], rowdata[7], rowdata[8], rowdata[9], rowdata[10], rowdata[11], rowdata[12], rowdata[13], rowdata[14], rowdata[15], "Pending", rowdata[16]))
+        conn.commit()
+        # cur.execute("""DELETE FROM `assets` WHERE `AssetID` = ?""", (assID,))
+        # conn = create_connection()
         cur = conn.cursor()
         cur.close()
 

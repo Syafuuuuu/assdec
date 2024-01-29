@@ -1,15 +1,4 @@
-{% extends 'base.html' %}
-
-{% block reg %}
-
-<li class="nav-link">
-    <a href="{{(url_for('registerUser'))}}">
-        <i class='bx bx-user-check icon'></i>
-        <span class="text nav-text">Register User</span>
-    </a>
-</li>
-
-{% endblock %}
+{% extends 'baseAdmin.html' %}
 
 {% block content %}
 
@@ -48,6 +37,40 @@
                     data-target="">Edit</a>
                 <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
                     onclick="return confirm('Are You Sure For Delete?')">Delete</a> -->
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Approved List</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Application ID</th>
+            <th>Type of Application</th>
+            <th>Date of Application</th>
+            <th>Name of Applicant</th>
+            <th>Asset Declaration Type</th>
+            <th>Asset Declaration Category</th>
+            <th>Description</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in completed %}
+        <tr>
+            <td class="texttable">{{ row.0 }}</td>
+            <td class="texttable">{{ row.1 }}</td>
+            <td class="texttable">{{ row.2 }}</td>
+            <td class="texttable">{{ row.3 }}</td>
+            <td class="texttable">{{ row.4 }}</td>
+            <td class="texttable">{{ row.5 }}</td>
+            <td class="texttable">{{ row.6 }}</td>
+            <td class="texttable">{{ row.7 }}</td>
+            <td class="texttable">
+                <a href='/viewComplete/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
             </td>
         </tr>
         {% endfor %}
