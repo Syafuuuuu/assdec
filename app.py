@@ -322,6 +322,43 @@ def updateAss(assID):
 
     return render_template('updateAss.html', asset_data=asset_data)
 
+#-----------Update Assets-----------
+@app.route('/ammend/<string:appID>', methods=['GET'])
+def updateAss(appID):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `appID` = ? AND `userID` = ?""", (appID, session.get('username', None)))
+    rowdata = cur.fetchone()
+    cur.close()
+
+    # Check if the asset data is fetched
+    if not rowdata:
+        flash("Error: Asset not found or you don't have permission to update.")
+        return redirect(url_for('index'))  # Redirect to the home page or another appropriate page
+
+    # Prepare the data in a dictionary format
+    asset_data = {
+        'ReviewID': rowdata[0],
+        'AssetID' : rowdata[2],
+        'AssDecType': rowdata[3],
+        'AssDecCat': rowdata[4],
+        'Description': rowdata[5],
+        'Address': rowdata[6],  # You may need to split the address into parts as needed
+        'Owner': rowdata[7],
+        'RegCertNo': rowdata[8],
+        'DateOfOwnership': rowdata[8],
+        'Quantity': rowdata[10],
+        'Measurement': rowdata[11],
+        'AssAcqVal': rowdata[12],
+        'CurrAssVal': rowdata[13],
+        'AcqMethod': rowdata[14],
+        'Attachment': rowdata[15],
+        'Review': rowdata[16],
+        'Status': rowdata[17]
+        
+    }
+
+    return render_template('updateAss.html', asset_data=asset_data)
 
 @app.route('/performUpdateAss/<string:assID>', methods=['POST'])
 def performUpdateAss(assID):
