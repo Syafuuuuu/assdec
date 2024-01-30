@@ -4,14 +4,21 @@ import requests
 from flask import Flask, jsonify, render_template , request, redirect, session, url_for, flash, redirect
 from urllib.parse import urljoin
 from werkzeug.utils import secure_filename
+from flask_session import Session
 from sqlite3 import Error
 import sqlite3
 import os
+from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
 
 UPLOAD_FOLDER = '\static\attachments'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg'}
 
 app = Flask (__name__)
+sess = Session()
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'loginPage'
 app.secret_key = 'flash_message'
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -111,6 +118,36 @@ cur.execute(buffer_creation_query)
 
 #endregion ----------------------------------------------
 
+class User(UserMixin):
+    def __init__(self, id, fullname, pswrd):
+        self.id = id
+        self.fullname = fullname
+        self.pswrd = pswrd
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM user WHERE userID=?", (user_id,))
+    user = cur.fetchone()
+    if user:
+        return User(*user)
+    return None
+
+@login_manager.user_loader
+def load_user(admin_id):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM admin WHERE adminID=?", (admin_id,))
+    user = cur.fetchone()
+    if user:
+        return User(*user)
+    return None
+
+
+
+
+
 #-----------Go to Login age-----------
 @app.route('/')
 def start():
@@ -119,6 +156,7 @@ def start():
 
 #-----------Admin Page-----------
 @app.route('/adminPage')
+@login_required
 def adminPage():
     conn = create_connection()
     cur = conn.cursor()
@@ -155,6 +193,7 @@ def adminPage():
 
 #-----------Home-----------
 @app.route('/home')
+@login_required
 def index():
 
     user = session.get('username', None)
@@ -171,6 +210,7 @@ def index():
 
 #-----------View Assets-----------
 @app.route('/viewAss/<string:assID>',methods=['POST','GET'])
+@login_required
 def viewAss(assID):
     conn = create_connection()
     cur = conn.cursor()
@@ -181,6 +221,7 @@ def viewAss(assID):
 
 #-----------View Buffer-----------
 @app.route('/viewBuffer/<string:assID>',methods=['POST','GET'])
+@login_required
 def viewBuffer(assID):
     conn = create_connection()
     cur = conn.cursor()
@@ -191,6 +232,7 @@ def viewBuffer(assID):
 
 #-----------View Buffer-----------
 @app.route('/viewComplete/<string:assID>',methods=['POST','GET'])
+@login_required
 def viewComplete(assID):
     conn = create_connection()
     cur = conn.cursor()
@@ -201,6 +243,7 @@ def viewComplete(assID):
 
 #-----------View Application-----------
 @app.route('/viewApplication/<string:assID>',methods=['POST','GET'])
+@login_required
 def viewApplciation(assID):
     conn = create_connection()
     cur = conn.cursor()
@@ -211,6 +254,7 @@ def viewApplciation(assID):
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST','GET'])
+@login_required
 def insertAss():
     if request.method == "POST":
         assDecType = request.form['assType']
@@ -294,17 +338,20 @@ def login():
             session['username'] = usr[0]
             session['Log'] = True
             session['userType'] = "user"
+            login_user(User(*usr))
             return redirect(url_for('index'))
         elif admin:
             session['username'] = admin[0]
             session['Log'] = True
             session['userType'] = "admin"
+            login_user(User(*admin))
             return redirect(url_for('adminPage'))
         else:
             return '<script>alert("Incorrect email or password."); window.location="/";</script>'
 
 #-----------Update Assets-----------
 @app.route('/updateAss/<string:assID>', methods=['GET'])
+@login_required
 def updateAss(assID):
     conn = create_connection()
     cur = conn.cursor()
@@ -341,6 +388,7 @@ def updateAss(assID):
     return render_template('updateAss.html', asset_data=asset_data)
 
 @app.route('/performUpdateAss/<string:assID>', methods=['POST'])
+@login_required
 def performUpdateAss(assID):
     # Extract updated values from the form submission
     assDecType = request.form['assType']
@@ -376,6 +424,7 @@ def performUpdateAss(assID):
 
 #----------Approve Request---------
 @app.route('/processApp/<string:appID>/<string:type>', methods=['POST','GET'])
+@login_required
 def processApp(appID,type):
     print("It has eneterd")
 
@@ -513,6 +562,7 @@ def processApp(appID,type):
         
 #----------Reject Request---------
 @app.route('/rejectApp/<string:appID>/<string:type>', methods=['POST','GET'])
+@login_required
 def rejectApp(appID,type):
     print("It has eneterd")
     if(type=="Addition" or type=="Edit" or type=="Deletion"):
@@ -551,6 +601,7 @@ def rejectApp(appID,type):
 
 #----------Approve Update----------
 @app.route('/ApproveUpdate/<string:appID>', methods=['POST'])
+@login_required
 def ApproveUpdate(appID):
     # Update the corresponding asset in the database
     conn = create_connection()
@@ -589,6 +640,7 @@ def ApproveUpdate(appID):
 
 #-----------Delete Asset-----------
 @app.route('/deleteAss/<string:assID>', methods=['GET'])
+@login_required
 def deleteAss(assID):
     conn = create_connection()
     cur = conn.cursor()
@@ -624,9 +676,16 @@ def deleteAss(assID):
         
 #-----------LogOut User-----------
 @app.route('/logout')
+@login_required
 def logout():
     session.clear()
+    print("--------------Attempt to logout------------")
+    logout_user()
+    print(logout_user())
+    print("---------------------logout-------------------")
     return redirect(url_for('loginPage'))
 
 if __name__ == '__main__':
+    app.config['SESSION_TYPE'] = 'filesystem'
+    sess.init_app(app)
     app.run(debug=True)
