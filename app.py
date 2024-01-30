@@ -8,7 +8,9 @@ from datetime import datetime, timedelta
 import sqlite3
 import os
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
+
 import hashlib
+
 
 UPLOAD_FOLDER = '\static\attachments'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg'}
@@ -150,9 +152,11 @@ def load_user(admin_id):
         return User(*user)
     return None
 
+
 def hash_route(route_name):
     route_hash = hashlib.sha256(route_name.encode()).hexdigest()
     return "/"+route_hash[:8]  # Take the first 8 characters of the hash as the obfuscated route
+
 
 #-----------Go to Login age-----------
 @app.route('/')
@@ -161,7 +165,9 @@ def start():
     return render_template('loginPage.html')
 
 #-----------Admin Page-----------
+
 @app.route(hash_route('/adminPage'))
+
 @login_required
 def adminPage():
     conn = create_connection()
@@ -198,6 +204,7 @@ def adminPage():
     return render_template('adminpage.html', review=pending, completed=completed)
 
 #-----------Home-----------
+
 @app.route(hash_route('/home'))
 @login_required
 def index():
