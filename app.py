@@ -1,11 +1,10 @@
-from datetime import date
-
 import requests
 from flask import Flask, jsonify, render_template , request, redirect, session, url_for, flash, redirect
 from urllib.parse import urljoin
 from werkzeug.utils import secure_filename
 from flask_session import Session
 from sqlite3 import Error
+from datetime import datetime, timedelta
 import sqlite3
 import os
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
@@ -24,6 +23,12 @@ app.secret_key = 'flash_message'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app.secret_key = "flash_message"
+
+# Dictionary to store login attempts
+login_attempts = {}
+
+# Lockout duration
+LOCKOUT_DURATION = timedelta(minutes=2)
 
 #region --------------Database Start--------------------
 # --- Database Connection ----
@@ -305,9 +310,78 @@ def loginPage():
 		return render_template('loginPage.html')
 
 #-----------Login Process-------------------
-@app.route('/login', methods=['POST'])
+# @app.route('/login', methods=['POST'])
+# def login():
+#     if request.method == 'POST':
+#         # Get the reCAPTCHA response from the form submission
+#         recaptcha_response = request.form.get('g-recaptcha-response')
+
+#         # Verify the reCAPTCHA response with the reCAPTCHA API
+#         response = requests.post(
+#             'https://www.google.com/recaptcha/api/siteverify',
+#             data={
+#                 'secret': '6LfWL2ApAAAAAHLENlTceAIFXsyuf7XKAjGAldU8',
+#                 'response': recaptcha_response
+#             }
+#         )
+#         result = response.json()
+
+#         # Check if the reCAPTCHA was successful
+#         if not result['success']:
+#             return redirect(url_for('loginPage'))
+
+#         email = request.form['username']
+#         password = request.form['password']
+#         conn = create_connection()
+#         cur = conn.cursor()
+#         cur.execute('SELECT `userID`,`email`,`password` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
+#         usr = cur.fetchone()
+#         cur.execute('SELECT `adminID`, `email`,`password` FROM `admin` WHERE `email`= ? AND `password`=?', (email,password))
+#         admin = cur.fetchone()
+#         cur.close()
+#         if usr:
+#             session['username'] = usr[0]
+#             session['Log'] = True
+#             session['userType'] = "user"
+#             login_user(User(*usr))
+#             return redirect(url_for('index'))
+#         elif admin:
+#             session['username'] = admin[0]
+#             session['Log'] = True
+#             session['userType'] = "admin"
+#             login_user(User(*admin))
+#             return redirect(url_for('adminPage'))
+#         else:
+#             # Increment login attempts for the given email
+#             login_attempts[email] = login_attempts.get(email, []) + [datetime.now()]
+
+#             # Check if the user has exceeded the login attempt limit within a minute
+#             if len(login_attempts[email]) > 3:
+#                 # Check if the earliest attempt is within the lockout duration
+#                 if datetime.now() - login_attempts[email][0] < LOCKOUT_DURATION:
+#                     return '<script>alert("Too many login attempts. Please try again later."); window.location="/";</script>'
+#                 else:
+#                     # Clear login attempts if the lockout duration has passed
+#                     login_attempts[email] = [datetime.now()]
+#             else:
+#                 return '<script>alert("Incorrect email or password."); window.location="/";</script>'
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
+    if request.method == 'GET':
+        # Check if the user is still locked out
+        if 'lockout_end_time' in session:
+            remaining_time = session['lockout_end_time'] - datetime.now()
+            if remaining_time > timedelta():
+                return '<script>alert("Too many login attempts. Please try again later."); window.location="/";</script>'
+            else:
+                # Clear lockout session variables
+                session.pop('lockout_end_time', None)
+                session.pop('lockout_email', None)
+
+        return render_template('login.html')  # Assuming you have a login page template
+
+    elif request.method == 'POST':
         # Get the reCAPTCHA response from the form submission
         recaptcha_response = request.form.get('g-recaptcha-response')
 
@@ -327,18 +401,21 @@ def login():
 
         email = request.form['username']
         password = request.form['password']
+
+        # Get the user from the database
         conn = create_connection()
         cur = conn.cursor()
-        cur.execute('SELECT `userID`,`email`,`password` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
-        usr = cur.fetchone()
-        cur.execute('SELECT `adminID`, `email`,`password` FROM `admin` WHERE `email`= ? AND `password`=?', (email,password))
+        cur.execute('SELECT `userID`, `email`, `password` FROM `user` WHERE `email` = ? AND `password` = ?', (email, password))
+        user = cur.fetchone()
+        cur.execute('SELECT `adminID`, `email`, `password` FROM `admin` WHERE `email` = ? AND `password` = ?', (email, password))
         admin = cur.fetchone()
         cur.close()
-        if usr:
-            session['username'] = usr[0]
+
+        if user:
+            session['username'] = user[0]
             session['Log'] = True
             session['userType'] = "user"
-            login_user(User(*usr))
+            login_user(User(*user))
             return redirect(url_for('index'))
         elif admin:
             session['username'] = admin[0]
@@ -347,7 +424,22 @@ def login():
             login_user(User(*admin))
             return redirect(url_for('adminPage'))
         else:
-            return '<script>alert("Incorrect email or password."); window.location="/";</script>'
+            # Increment login attempts for the given email
+            login_attempts[email] = login_attempts.get(email, []) + [datetime.now()]
+
+            # Check if the user has exceeded the login attempt limit within a minute
+            if len(login_attempts[email]) > 3:
+                # Check if the earliest attempt is within the lockout duration
+                if datetime.now() - login_attempts[email][0] < LOCKOUT_DURATION:
+                    # Set lockout session variables
+                    session['lockout_end_time'] = datetime.now() + LOCKOUT_DURATION
+                    session['lockout_email'] = email
+                    return redirect(url_for('login'))  # Redirect to GET /login route
+                else:
+                    # Clear login attempts if the lockout duration has passed
+                    login_attempts[email] = [datetime.now()]
+            else:
+                return '<script>alert("Incorrect email or password."); window.location="/";</script>'
 
 #-----------Update Assets-----------
 @app.route('/updateAss/<string:assID>', methods=['GET'])

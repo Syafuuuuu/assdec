@@ -118,9 +118,9 @@
             </div>
             <div class="g-recaptcha" data-sitekey="6LfWL2ApAAAAADv2OKjpeahBXoYOM60EEJIWyWWL"></div>
             <div class="form-group">
-                <input type="submit" value="Login">
+                <input type="submit" value="Login" id="loginButton">
             </div>
-
+            <div id="lockoutTimer" style="color: white;"></div>
         </form>
     </div>
 </div>
@@ -135,6 +135,24 @@
         }
         return true;
     }
+
+    // Function to update the remaining lockout time
+    function updateLockoutTimer() {
+        var remainingTime = new Date("{{ session.get('lockout_end_time') }}") - new Date();
+        if (remainingTime > 0) {
+            var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+            document.getElementById('lockoutTimer').innerHTML = "Remaining lockout time: " + minutes + "m " + seconds + "s";
+            document.getElementById('loginButton').disabled = true; // Disable the login button
+            setTimeout(updateLockoutTimer, 1000);
+        } else {
+            document.getElementById('lockoutTimer').innerHTML = "";
+            document.getElementById('loginButton').disabled = false; // Enable the login button
+        }
+    }
+
+    // Call the updateLockoutTimer function
+    updateLockoutTimer();
 </script>
 
 </html>
