@@ -1,4 +1,8 @@
 {% extends 'base.html' %}
+
+{% block reg %}
+{% endblock %}
+
 {% block content %}
 
 <h1>Current Assets Declared</h1>
@@ -20,7 +24,7 @@
     {% endif %}
     {% endwith %}
     <tr>
-        <th>ID.</th>
+        <th>ID</th>
         <th>Date of Application</th>
         <th>Asset Declaration Type</th>
         <th>Asset Declaration Category</th>
@@ -52,6 +56,38 @@
 
 </table>
 
+<p>Records are seen below:</p>
+
+<table class="table table-striped">
+    <tr>
+        <th>ID</th>
+        <th>Date of Application</th>
+        <th>Asset Declaration Type</th>
+        <th>Asset Declaration Category</th>
+        <th>Description</th>
+        <th>Action</th>
+    </tr>
+    {% for rows in pendingdata %}
+    <tr>
+        <td class="texttable">{{ rows.0 }}</td>
+        <td class="texttable">{{ rows.1 }}</td>
+        <td class="texttable">{{ rows.2 }}</td>
+        <td class="texttable">{{ rows.3 }}</td>
+        <td class="texttable">{{ rows.4 }}</td>
+        <td class="texttable">
+            <script>
+                function debugHref(element) {
+                    var href = element.getAttribute("href");
+                    console.log("Debug Href:", href);
+                }
+            </script>
+            <a href='/viewApplication/{{ rows.0 }}' class="btn btn-info btn- xs">View</a>
+        </td>
+    </tr>>
+    {% endfor %}
+
+</table>
+
 <button type="button" class="btn btn-success  pull-right" data-toggle="modal" data-target="#myModal">
     Add Record
 </button>
@@ -65,10 +101,11 @@
                 <h4 class="modal-title">Please Insert Data</h4>
             </div>
             <div class="modal-body">
-                <form action="{{url_for('insertAss')}}" method='POST'>
+                <form action="{{url_for('insertAss')}}" method='POST' enctype="multipart/form-data">
                     <div class="form-group">
                         <label>Asset Declaration Type:</label>
-                        <select id=assetType class="form-control" name="assType" required="1" onchange="updateOptions()">
+                        <select id=assetType class="form-control" name="assType" required="1"
+                            onchange="updateOptions()">
                             <option value="">--Choose--</option>
                             <option value="Movable">Movable</option>
                             <option value="Immovable">Immovable</option>
@@ -76,7 +113,8 @@
                     </div>
                     <div class="form-group">
                         <label>Asset Declaration Category:</label>
-                        <select id="subAssetType" for="subAssetType" class="form-control" name="assCat" required="1"></select>
+                        <select id="subAssetType" for="subAssetType" class="form-control" name="assCat"
+                            required="1"></select>
                     </div>
                     <div class="form-group">
                         <label>Description:</label>
@@ -103,10 +141,11 @@
                     <div class="form-group">
                         <label>Registration Cert No.:</label>
                         <input type="text" class="form-control" name="assCert" required="1">
+                        <!-- <input type="text" class="form-control" name="assCert" required="1" pattern="[a-zA-Z0-9]"> -->
                     </div>
                     <div class="form-group">
                         <label>Date of Ownership:</label>
-                        <input type="date" class="form-control" name="assDateOwn" required="1">
+                        <input type="date" class="form-control" name="assDateOwn" max="2024-1-31" required="1">
                     </div>
                     <div class="form-group">
                         <label>Quantity:</label>
@@ -137,6 +176,11 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Attachment (Proof):</label>
+                        <input type="file" class="form-control" name="file" required="1" enctype="multipart/form-data"
+                            accept=".txt,.pdf,.png,.jpg,.jpeg">
+                    </div>
+                    <div class="form-group">
                         <button class="btn btn-primary" type="submit">Add Asset</button>
                     </div>
                 </form>
@@ -151,39 +195,44 @@
 
 <script>
     function updateOptions() {
-    const assetType = document.getElementById('assetType').value;
-    const subAssetType = document.getElementById('subAssetType');
+        const assetType = document.getElementById('assetType').value;
+        const subAssetType = document.getElementById('subAssetType');
 
-    // Clear existing options
-    subAssetType.innerHTML = '';
+        // Clear existing options
+        subAssetType.innerHTML = '';
 
-    // Populate options based on asset type
-    if (assetType === 'Movable') {
-      const movableAssetTypes = ['Cash/Bank Account', 'Motor Vehicles', 'Shares, Stock, Bonds and Securities', 'Jewelleries', 'Licenses and Permits', 'Other Valuables'];
-      for (const movableAssetType of movableAssetTypes) {
-        const option = document.createElement('option');
-        option.value = movableAssetType;
-        option.textContent = movableAssetType;
+        // Populate options based on asset type
+        if (assetType === 'Movable') {
+            const movableAssetTypes = ['Cash/Bank Account', 'Motor Vehicles', 'Shares, Stock, Bonds and Securities', 'Jewelleries', 'Licenses and Permits', 'Other Valuables'];
+            for (const movableAssetType of movableAssetTypes) {
+                const option = document.createElement('option');
+                option.value = movableAssetType;
+                option.textContent = movableAssetType;
 
-        subAssetType.appendChild(option);
-      }
-    } else if (assetType === 'Immovable') {
-      const immovableAssetTypes = ['Land', 'Landed Property', 'Business owned by Families'];
-      for (const immovableAssetType of immovableAssetTypes) {
-        const option = document.createElement('option');
-        option.value = immovableAssetType;
-        option.textContent = immovableAssetType;
+                subAssetType.appendChild(option);
+            }
+        } else if (assetType === 'Immovable') {
+            const immovableAssetTypes = ['Land', 'Landed Property', 'Business owned by Families'];
+            for (const immovableAssetType of immovableAssetTypes) {
+                const option = document.createElement('option');
+                option.value = immovableAssetType;
+                option.textContent = immovableAssetType;
 
-        subAssetType.appendChild(option);
-      }
-    } else {
-      // No options for other asset types
+                subAssetType.appendChild(option);
+            }
+        } else {
+            // No options for other asset types
+        }
     }
-  }
+
+    // Get today's date in YYYY-MM-DD format
+    var today = new Date().toISOString().split('T')[0];
+    // Set the maximum date attribute of the input field to today
+    document.getElementsByName("assDateOwn")[0].setAttribute('max', today);
 </script>
 
 <script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> 
+<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
 {% endblock %}

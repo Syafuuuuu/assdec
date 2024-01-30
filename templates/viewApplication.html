@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+    <form action="" method='POST'>
+        <table class="table table-striped" style="width: 100%;">
+            <tr>
+                <th>Application ID</th>
+                <td id="ID">{{rowdata.0}}</td>
+            </tr>
+            <tr>
+                <th>Type of Applciation</th>
+                <td id="ID">{{rowdata.1}}</td>
+            </tr>
+            <tr>
+                <th>Application Date</th>
+                <td id="Date">{{rowdata.4}}</td>
+            </tr>
+            <tr>
+                <th>Type</th>
+                <td id="Type">{{rowdata.5}}</td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td id="Cat">{{rowdata.6}}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td id="Desc">{{rowdata.7}}</td>
+            </tr>
+            <tr>
+                <th>Address</th>
+                <td id="Addr">{{rowdata.8}}</td>
+            </tr>
+            <tr>
+                <th>Owner</th>
+                <td id="Owner">{{rowdata.9}}</td>
+            </tr>
+            <tr>
+                <th>Registration Cert No.</th>
+                <td id="RegNo">{{rowdata.10}}</td>
+            </tr>
+            <tr>
+                <th>Date of Ownership</th>
+                <td id="DateofOwn">{{rowdata.11}}</td>
+            </tr>
+            <tr>
+                <th>Quantity</th>
+                <td id="Quant">{{rowdata.12}}</td>
+            </tr>
+            <tr>
+                <th>Measurement</th>
+                <td id="Msrmnt">{{rowdata.13}}</td>
+            </tr>
+            <tr>
+                <th>Asset Acquired Value (RM)</th>
+                <td id="AcqVal">{{rowdata.14}}</td>
+            </tr>
+            <tr>
+                <th>Asset Current Value (RM)</th>
+                <td id="CurrVal">{{rowdata.15}}</td>
+            </tr>
+            <tr>
+                <th>Acquisition Method</th>
+                <td id="AcqMet">{{rowdata.16}}</td>
+            </tr>
+            <tr>
+                <th>Attachment</th>
+                <td id="Attchmnt"><a href="/static/attachment/{{rowdata.15}}"
+                        download="{{rowdata.15}}">{{rowdata.17}}</a>
+                </td>
+            </tr>
+            <tr>
+                <th>Review</th>
+                <td><textarea id="review" name="review" value="{{rowdata.18}}" rows="4" cols="50" placeholder="" readonly>{{rowdata.18}}</textarea></td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td id="Status">{{rowdata.19}}</td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+{% endblock %}

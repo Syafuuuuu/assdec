@@ -1,4 +1,5 @@
-{% extends 'base.html' %}
+{% extends 'baseAdmin.html' %}
+
 {% block content %}
 
 <h1>Assets Declared by Users</h1>
@@ -6,14 +7,13 @@
 <br><br>
 <p>Records are seen below:</p>
 
-{% for fullname, assets in assets_by_fullname.items() %}
-<h2>{{ fullname }}'s Assets</h2>
-
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>No.</th>
+            <th>Application ID</th>
+            <th>Type of Application</th>
             <th>Date of Application</th>
+            <th>Name of Applicant</th>
             <th>Asset Declaration Type</th>
             <th>Asset Declaration Category</th>
             <th>Description</th>
@@ -21,24 +21,61 @@
         </tr>
     </thead>
     <tbody>
-        {% for row in assets %}
+        {% for row in review %}
         <tr>
             <td class="texttable">{{ row.0 }}</td>
             <td class="texttable">{{ row.1 }}</td>
             <td class="texttable">{{ row.2 }}</td>
             <td class="texttable">{{ row.3 }}</td>
             <td class="texttable">{{ row.4 }}</td>
+            <td class="texttable">{{ row.5 }}</td>
+            <td class="texttable">{{ row.6 }}</td>
+            <td class="texttable">{{ row.7 }}</td>
             <td class="texttable">
-                <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
-                <!-- <a href='/updateAss' class="btn btn-warning btn- xs" data-toggle="modal" data-target="">Edit</a>
+                <a href='/viewBuffer/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
+                <!-- <a href="{{url_for('updateAss', assID=row.0)}}" class="btn btn-warning btn- xs" data-toggle="modal"
+                    data-target="">Edit</a>
                 <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
                     onclick="return confirm('Are You Sure For Delete?')">Delete</a> -->
             </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-            </table>
-            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Approved List</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Application ID</th>
+            <th>Type of Application</th>
+            <th>Date of Application</th>
+            <th>Name of Applicant</th>
+            <th>Asset Declaration Type</th>
+            <th>Asset Declaration Category</th>
+            <th>Description</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in completed %}
+        <tr>
+            <td class="texttable">{{ row.0 }}</td>
+            <td class="texttable">{{ row.1 }}</td>
+            <td class="texttable">{{ row.2 }}</td>
+            <td class="texttable">{{ row.3 }}</td>
+            <td class="texttable">{{ row.4 }}</td>
+            <td class="texttable">{{ row.5 }}</td>
+            <td class="texttable">{{ row.6 }}</td>
+            <td class="texttable">{{ row.7 }}</td>
+            <td class="texttable">
+                <a href='/viewComplete/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 
 

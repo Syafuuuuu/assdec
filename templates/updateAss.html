@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container">
     <h2>Update Asset</h2>
-    <form action="{{ url_for('performUpdateAss', assID=asset_data['AssetID']) }}" method="POST">
+    <form action="{{ url_for('performUpdateAss', assID=asset_data['AssetID']) }}" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label>Asset Declaration Type:</label>
             <select id=assetType class="form-control" name="assType" required="1" onchange="updateOptions()">
@@ -67,6 +67,20 @@
                 <option value="Self" {% if asset_data['AcqMethod']=='Self' %}selected{% endif %}>Self</option>
                 <option value="Shared" {% if asset_data['AcqMethod']=='Shared' %}selected{% endif %}>Shared</option>
             </select>
+        </div>
+        <div class="form-group">
+            <label>Attachment:</label>
+            <input id="attachment" name="attachment" type="file" class="form-control" name="file" required="1" enctype="multipart/form-data"
+                            accept=".txt,.pdf,.png,.jpg,.jpeg" value="{{ asset_data['Attachment'] }}" placeholder="{{ asset_data['Attachment'] }}">
+        </div>
+        <div class="form-group">
+            <label for="review">Review:</label>
+            <br>
+            <textarea textarea id="review" name="review" value="{{ asset_data['Review'] }}" rows="4" cols="50" placeholder="" readonly>{{ asset_data['Review'] }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>Status: </label>
+            <input id="status" name="status" type="text" value="{{ asset_data['Status'] }}" readonly>
         </div>
         <div class="form-group">
             <button class="btn btn-primary" type="submit">Update Asset</button>
