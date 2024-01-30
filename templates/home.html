@@ -145,7 +145,7 @@
                     </div>
                     <div class="form-group">
                         <label>Date of Ownership:</label>
-                        <input type="date" class="form-control" name="assDateOwn" required="1">
+                        <input type="date" class="form-control" name="assDateOwn" max="2024-1-31" required="1">
                     </div>
                     <div class="form-group">
                         <label>Quantity:</label>
@@ -224,6 +224,11 @@
             // No options for other asset types
         }
     }
+
+    // Get today's date in YYYY-MM-DD format
+    var today = new Date().toISOString().split('T')[0];
+    // Set the maximum date attribute of the input field to today
+    document.getElementsByName("assDateOwn")[0].setAttribute('max', today);
 </script>
 
 <script type="text/javascript" src="{{ url_for('static', filename='js/npm.js') }}"></script>
