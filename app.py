@@ -1,6 +1,17 @@
 from datetime import date
 from flask import Flask, jsonify, render_template , request, redirect, session, url_for, flash, redirect
 from urllib.parse import urljoin
+<<<<<<< Updated upstream
+=======
+from werkzeug.utils import secure_filename
+from flask_session import Session
+from sqlite3 import Error
+from datetime import datetime, timedelta
+import sqlite3
+import os
+from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
+import hashlib
+>>>>>>> Stashed changes
 
 from flask_mysqldb import MySQL
 
@@ -15,6 +26,137 @@ app.config ['MYSQL_DB'] = 'assdec'
 mysql = MySQL(app)
 app.secret_key = "flash_message"
 
+<<<<<<< Updated upstream
+=======
+# Dictionary to store login attempts
+login_attempts = {}
+
+# Lockout duration
+LOCKOUT_DURATION = timedelta(minutes=2)
+
+#region --------------Database Start--------------------
+# --- Database Connection ----
+def create_connection():
+    conn = None
+    try:
+        conn = sqlite3.connect('static/db/user.db')  # create a database connection
+        return conn
+    except Error as e:
+        print(e)
+
+    return conn
+
+conn = create_connection()
+cur = conn.cursor()
+
+# --- Table Creation ---
+
+# - User Table -
+user_creation_query = '''
+CREATE TABLE IF NOT EXISTS user (
+userID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+email TEXT NOT NULL,
+password TEXT NOT NULL,
+fullname TEXT NOT NULL,
+age INTEGER NOT NULL
+);
+'''
+cur.execute(user_creation_query)
+
+# - Admin Table -
+admin_creation_query = '''
+CREATE TABLE IF NOT EXISTS admin (
+adminID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+email TEXT NOT NULL,
+password TEXT NOT NULL
+);
+'''
+cur.execute(admin_creation_query)
+
+# - User Asset Table -
+asset_creation_query = '''
+CREATE TABLE IF NOT EXISTS assets (
+AssetID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+UserID INTEGER NOT NULL,
+DateOfApp DATE NOT NULL,
+AssDecType TEXT NOT NULL,
+AssDecCat TEXT NOT NULL,
+Description TEXT NOT NULL,
+Address TEXT NOT NULL,
+Owner TEXT NOT NULL,
+RegCertNo TEXT NOT NULL,
+DateOfOwnership DATE NOT NULL,
+Quantity INTEGER NOT NULL,
+Measurement TEXT NOT NULL,
+AssAcqVAl REAL NOT NULL,
+CurrAssVal REAL NOT NULL,
+AcqMethod TEXT NOT NULL,
+Attachment TEXT NOT NULL,
+Review TEXT NOT NULL,
+Status TEXT NOT NULL
+);
+'''
+cur.execute(asset_creation_query)
+
+# - Buffer Table -
+buffer_creation_query = '''
+CREATE TABLE IF NOT EXISTS buffer (
+ReviewID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+ReviewType TEXT NOT NULL,
+AssetID INTEGER,
+UserID INTEGER NOT NULL,
+DateOfApp DATE NOT NULL,
+AssDecType TEXT NOT NULL,
+AssDecCat TEXT NOT NULL,
+Description TEXT NOT NULL,
+Address TEXT NOT NULL,
+Owner TEXT NOT NULL,
+RegCertNo TEXT NOT NULL,
+DateOfOwnership DATE NOT NULL,
+Quantity INTEGER NOT NULL,
+Measurement TEXT NOT NULL,
+AssAcqVAl REAL NOT NULL,
+CurrAssVal REAL NOT NULL,
+AcqMethod TEXT NOT NULL,
+Attachment TEXT NOT NULL,
+Review TEXT NOT NULL,
+Status TEXT NOT NULL
+);
+'''
+cur.execute(buffer_creation_query)
+
+#endregion ----------------------------------------------
+
+class User(UserMixin):
+    def __init__(self, id, fullname, pswrd):
+        self.id = id
+        self.fullname = fullname
+        self.pswrd = pswrd
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM user WHERE userID=?", (user_id,))
+    user = cur.fetchone()
+    if user:
+        return User(*user)
+    return None
+
+@login_manager.user_loader
+def load_user(admin_id):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM admin WHERE adminID=?", (admin_id,))
+    user = cur.fetchone()
+    if user:
+        return User(*user)
+    return None
+
+def hash_route(route_name):
+    route_hash = hashlib.sha256(route_name.encode()).hexdigest()
+    return "/"+route_hash[:8]  # Take the first 8 characters of the hash as the obfuscated route
+>>>>>>> Stashed changes
 
 #-----------Go to Login age-----------
 @app.route('/')
@@ -23,7 +165,12 @@ def start():
     return render_template('loginPage.html')
 
 #-----------Admin Page-----------
+<<<<<<< Updated upstream
 @app.route('/adminPage')
+=======
+@app.route(hash_route('adminPage'))
+@login_required
+>>>>>>> Stashed changes
 def adminPage():
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -42,7 +189,12 @@ def adminPage():
             assets_by_fullname[fullname] = []
         assets_by_fullname[fullname].append(row)
 
+<<<<<<< Updated upstream
     return render_template('adminpage.html', assets_by_fullname=assets_by_fullname)
+=======
+    return render_template('adminpage.html', review=pending, completed=completed)
+    pass
+>>>>>>> Stashed changes
 
 #-----------Home-----------
 @app.route('/home')
