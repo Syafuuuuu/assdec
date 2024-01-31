@@ -299,33 +299,34 @@ def viewApplciation(assID):
 @app.route('/insertAss', methods = ['POST','GET'])
 @login_required
 def insertAss():
-    if request.method == "POST":
-        secret_response = request.form['g-recaptcha-response']
+    try:
+        if request.method == "POST":
+            secret_response = request.form['g-recaptcha-response']
 
-        verify_response = requests.post(url=f'{VERIFY_URL}?secret={SECRET_KEY}&response={secret_response}').json()
+            verify_response = requests.post(url=f'{VERIFY_URL}?secret={SECRET_KEY}&response={secret_response}').json()
 
-        if verify_response['success'] == False or verify_response['score'] < 0.5:
+            if verify_response['success'] == False or verify_response['score'] < 0.5:
 
 
-            # Process the form data here
-            assDecType = request.form['assType']
-            assDecCat = request.form['assCat']
-            assDec = request.form['assDec']
-            assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
-            assOwner = request.form['assOwner']
-            assCert = request.form['assCert']
-            assDateOwn = request.form['assDateOwn']
-            assQuantity = request.form['assQuantity']
-            assMeasurement = request.form['assMeasurement']
-            assAcqVal = request.form['assAcqVal']
-            assCurVal = request.form['assCurVal']
-            assAcq = request.form['assAcq']
-            attchmnt = request.files['file']
-            filename = secure_filename(attchmnt.filename)
-            
-            print(assDec)
-            print(assDec.isalnum())
-            print(assDec.isalnum)
+                # Process the form data here
+                assDecType = request.form['assType']
+                assDecCat = request.form['assCat']
+                assDec = request.form['assDec']
+                assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
+                assOwner = request.form['assOwner']
+                assCert = request.form['assCert']
+                assDateOwn = request.form['assDateOwn']
+                assQuantity = request.form['assQuantity']
+                assMeasurement = request.form['assMeasurement']
+                assAcqVal = request.form['assAcqVal']
+                assCurVal = request.form['assCurVal']
+                assAcq = request.form['assAcq']
+                attchmnt = request.files['file']
+                filename = secure_filename(attchmnt.filename)
+                
+                print(assDec)
+                print(assDec.isalnum())
+                print(assDec.isalnum)
 
 
                 if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
@@ -341,10 +342,8 @@ def insertAss():
                 else:
                     flash("Check your inputs!")
             else:
-                flash("Data Not Inserted!")
-            return redirect(url_for ('index'))
-        else:
-            return redirect(url_for ('index'))
+                flash("Bot Detected!")
+                return redirect(url_for ('index'))
     except:
         flash("An Exception Occured!")
     return render_template('loginPage.html')
