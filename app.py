@@ -11,6 +11,7 @@ import os
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
 
 import hashlib
+from flask_simple_crypt import SimpleCrypt
 
 
 UPLOAD_FOLDER = '\static\attachments'
@@ -27,10 +28,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'loginPage'
 app.secret_key = 'flash_message'
-
+app.config['FSC_EXPANSION_COUNT'] = 2048
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-app.secret_key = "flash_message"
+cipher = SimpleCrypt()
+cipher.init_app(app)
+
 
 # Dictionary to store login attempts
 login_attempts = {}
@@ -319,6 +322,13 @@ def insertAss():
             if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
                 conn = create_connection()
                 cur = conn.cursor()
+                
+                assDec = cipher.encrypt(assDec)
+                assAddr = cipher.encrypt(assAddr)
+                assCert = cipher.encrypt(assCert)
+                assAcqVal = cipher.encrypt(assAcqVal)
+                assCurVal = cipher.encrypt(assCurVal)
+                
                 cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
                 conn.commit()
 
@@ -326,7 +336,7 @@ def insertAss():
                 attchmnt.save(os.path.join('static/attachment', filename))
 
                 flash("Request to add asset sent!")
-            else:
+            else:   
                 flash("Check your inputs!")
         else:
             flash("Data Not Inserted!")
