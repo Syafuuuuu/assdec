@@ -19,6 +19,10 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg'}
 app = Flask (__name__)
 sess = Session()
 
+SITE_KEY = '6LfaMWEpAAAAAAoCokW7UkLPMxpAsNjRD6nzJmCJ'
+SECRET_KEY = '6LfaMWEpAAAAAPB932G61JU7Avky7STYGY8DD8UW'
+VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'loginPage'
@@ -284,22 +288,13 @@ def viewApplciation(assID):
 @login_required
 def insertAss():
     if request.method == "POST":
-        # Get the reCAPTCHA response from the form
-        recaptcha_response = request.form['g-recaptcha-v3-response']
+        secret_response = request.form['g-recaptcha-response']
 
-        # Verify the reCAPTCHA response
-        recaptcha_data = {
-            'secret': '6LfaMWEpAAAAAPB932G61JU7Avky7STYGY8DD8UW',
-            'response': recaptcha_response
-        }
-        r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=recaptcha_data)
-        result = r.json()
+        verify_response = requests.post(url=f'{VERIFY_URL}?secret={SECRET_KEY}&response={secret_response}').json()
 
-        # Get the file from the form
-        attchmnt = request.files['file']
+        if verify_response['success'] == False or verify_response['score'] < 0.5:
 
-        # Check the reCAPTCHA score
-        if result['success'] and result['score'] >= 0.5:
+
             # Process the form data here
             assDecType = request.form['assType']
             assDecCat = request.form['assCat']
