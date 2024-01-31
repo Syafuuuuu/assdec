@@ -42,7 +42,7 @@
         </div>
         <div class="form-group">
             <label>Quantity:</label>
-            <input type="number" class="form-control" name="assQuantity" required="1" value="{{ asset_data['Quantity'] }}">
+            <input type="number" class="form-control" name="assQuantity" min="1" required="1" value="{{ asset_data['Quantity'] }}">
         </div>
         <div class="form-group">
             <label>Measurement:</label>
@@ -55,11 +55,11 @@
         </div>
         <div class="form-group">
             <label>Asset Acquisition Value:</label>
-            <input type="number" class="form-control" name="assAcqVal" required="1" value="{{ asset_data['AssAcqVal'] }}">
+            <input type="number" class="form-control" name="assAcqVal" min="1" required="1" value="{{ asset_data['AssAcqVal'] }}">
         </div>
         <div class="form-group">
             <label>Current Asset Value (Estimate):</label>
-            <input type="number" class="form-control" name="assCurVal" required="1" value="{{ asset_data['CurrAssVal'] }}">
+            <input type="number" class="form-control" name="assCurVal" min="1" required="1" value="{{ asset_data['CurrAssVal'] }}">
         </div>
         <div class="form-group">
             <label>Acquisition Method:</label>

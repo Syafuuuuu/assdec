@@ -35,6 +35,13 @@ login_attempts = {}
 LOCKOUT_DURATION = timedelta(minutes=2)
 
 #region --------------Database Start--------------------
+
+def formValidation(currVal, AcqVal, Quant, desc):
+    if currVal>=1 and AcqVal>=1 and Quant>=1 and desc.isalnum():
+        return True
+    else:
+        return False
+
 # --- Database Connection ----
 def create_connection():
     conn = None
@@ -301,35 +308,23 @@ def insertAss():
             assCurVal = request.form['assCurVal']
             assAcq = request.form['assAcq']
             attchmnt = request.files['file']
-            
-            print(assDecCat)
-            print(assDec)
-            print(assAddr)
+            filename = secure_filename(attchmnt.filename)
 
-        print("Filenmae Below")
-        print(attchmnt)
-        print(attchmnt.filename)
-        print("filename above")
 
-        filename = secure_filename(attchmnt.filename)
-        print("Filenmae Below")
-        print(filename)
-        print("filename above")
+            if formValidation(assCurVal, assAcqVal, assQuantity, desc):
+                conn = create_connection()
+                cur = conn.cursor()
+                cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
+                conn.commit()
 
-        # conn = create_connection()
-        # cur = conn.cursor()
-        # cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
-        # conn.commit()
+                os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
+                attchmnt.save(os.path.join('static/attachment', filename))
 
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
-        conn.commit()
-
-        os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
-        attchmnt.save(os.path.join('static/attachment', filename))
-
-        flash("Data Inserted Successfully")
+                flash("Data Inserted Successfully")
+            else:
+                flash("Check your inputs!")
+        else:
+            flash("Data Not Inserted!")
         return redirect(url_for ('index'))
     else:
         return redirect(url_for ('index'))
@@ -339,63 +334,6 @@ def insertAss():
 def loginPage():
 
 		return render_template('loginPage.html')
-
-#-----------Login Process-------------------
-# @app.route('/login', methods=['POST'])
-# def login():
-#     if request.method == 'POST':
-#         # Get the reCAPTCHA response from the form submission
-#         recaptcha_response = request.form.get('g-recaptcha-response')
-
-#         # Verify the reCAPTCHA response with the reCAPTCHA API
-#         response = requests.post(
-#             'https://www.google.com/recaptcha/api/siteverify',
-#             data={
-#                 'secret': '6LfWL2ApAAAAAHLENlTceAIFXsyuf7XKAjGAldU8',
-#                 'response': recaptcha_response
-#             }
-#         )
-#         result = response.json()
-
-#         # Check if the reCAPTCHA was successful
-#         if not result['success']:
-#             return redirect(url_for('loginPage'))
-
-#         email = request.form['username']
-#         password = request.form['password']
-#         conn = create_connection()
-#         cur = conn.cursor()
-#         cur.execute('SELECT `userID`,`email`,`password` FROM `user` WHERE `email`= ? AND `password`=?', (email,password))
-#         usr = cur.fetchone()
-#         cur.execute('SELECT `adminID`, `email`,`password` FROM `admin` WHERE `email`= ? AND `password`=?', (email,password))
-#         admin = cur.fetchone()
-#         cur.close()
-#         if usr:
-#             session['username'] = usr[0]
-#             session['Log'] = True
-#             session['userType'] = "user"
-#             login_user(User(*usr))
-#             return redirect(url_for('index'))
-#         elif admin:
-#             session['username'] = admin[0]
-#             session['Log'] = True
-#             session['userType'] = "admin"
-#             login_user(User(*admin))
-#             return redirect(url_for('adminPage'))
-#         else:
-#             # Increment login attempts for the given email
-#             login_attempts[email] = login_attempts.get(email, []) + [datetime.now()]
-
-#             # Check if the user has exceeded the login attempt limit within a minute
-#             if len(login_attempts[email]) > 3:
-#                 # Check if the earliest attempt is within the lockout duration
-#                 if datetime.now() - login_attempts[email][0] < LOCKOUT_DURATION:
-#                     return '<script>alert("Too many login attempts. Please try again later."); window.location="/";</script>'
-#                 else:
-#                     # Clear login attempts if the lockout duration has passed
-#                     login_attempts[email] = [datetime.now()]
-#             else:
-#                 return '<script>alert("Incorrect email or password."); window.location="/";</script>'
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -816,3 +754,4 @@ if __name__ == '__main__':
     app.config['SESSION_TYPE'] = 'filesystem'
     sess.init_app(app)
     app.run(debug=True)
+    
