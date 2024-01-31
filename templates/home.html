@@ -49,7 +49,7 @@
                     </script>
                     <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
                     {% if row.5 != "Pending" %}
-                    <a href="{{ url_for('updateAss', assID=row.5) }}" class="btn btn-warning btn- xs"
+                    <a href="{{ url_for('updateAss', assID=row.0) }}" class="btn btn-warning btn- xs"
                        data-toggle="modal"
                        data-target="">Edit</a>
                     <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
