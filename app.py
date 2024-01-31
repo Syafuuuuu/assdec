@@ -43,8 +43,14 @@ LOCKOUT_DURATION = timedelta(minutes=2)
 
 #region --------------Database Start--------------------
 
-def formValidation(currVal, AcqVal, Quant, desc):
-    if float(currVal)>=1 and float(AcqVal)>=1 and float(Quant)>=1 and desc.isalnum():
+# def formValidation(currVal, AcqVal, Quant, desc):
+#     if float(currVal)>=1 and float(AcqVal)>=1 and float(Quant)>=1 and desc.isalnum():
+#         return True
+#     else:
+#         return False
+
+def formValidation(currVal, AcqVal, Quant):
+    if float(currVal)>=1 and float(AcqVal)>=1 and float(Quant)>=1:
         return True
     else:
         return False
@@ -319,7 +325,7 @@ def insertAss():
             print(assDec.isalnum)
 
 
-            if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
+            if formValidation(assCurVal, assAcqVal, assQuantity):
                 conn = create_connection()
                 cur = conn.cursor()
                 
@@ -484,10 +490,17 @@ def performUpdateAss(assID):
     review = request.form['review']
     status = "Pending"
 
-    if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
+    if formValidation(assCurVal, assAcqVal, assQuantity):
     # Update the corresponding asset in the database
         conn = create_connection()
         cur = conn.cursor()
+        
+        assDec = cipher.encrypt(assDec)
+        assAddr = cipher.encrypt(assAddr)
+        assCert = cipher.encrypt(assCert)
+        assAcqVal = cipher.encrypt(assAcqVal)
+        assCurVal = cipher.encrypt(assCurVal)
+        
         cur.execute ("UPDATE assets SET status = ? WHERE AssetID = ?", (status, assID))
         conn.commit()
         cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Edit", assID, session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, status, review))
