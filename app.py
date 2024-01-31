@@ -254,99 +254,85 @@ def viewAss(assID):
 @app.route('/viewBuffer/<string:assID>',methods=['POST','GET'])
 @login_required
 def viewBuffer(assID):
-    try:
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
-        rowdata = cur.fetchone()
-        cur.close
-        return render_template('viewBuffer.html', rowdata=rowdata)
-    except:
-        flash("An Exception Occured!")
-    return render_template('loginPage.html')
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
+    rowdata = cur.fetchone()
+    cur.close
+    return render_template('viewBuffer.html', rowdata=rowdata)
 
 #-----------View Buffer-----------
 @app.route('/viewComplete/<string:assID>',methods=['POST','GET'])
 @login_required
 def viewComplete(assID):
-    try:
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
-        rowdata = cur.fetchone()
-        cur.close
-        return render_template('viewComplete.html', rowdata=rowdata)
-    except:
-        flash("An Exception Occured!")
-    return render_template('loginPage.html')
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
+    rowdata = cur.fetchone()
+    cur.close
+    return render_template('viewComplete.html', rowdata=rowdata)
 
 #-----------View Application-----------
 @app.route('/viewApplication/<string:assID>',methods=['POST','GET'])
 @login_required
 def viewApplciation(assID):
-    try:
-        conn = create_connection()
-        cur = conn.cursor()
-        cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
-        rowdata = cur.fetchone()
-        cur.close
-        return render_template('viewApplication.html', rowdata=rowdata)
-    except:
-        flash("An Exception Occured!")
-    return render_template('loginPage.html')
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
+    rowdata = cur.fetchone()
+    cur.close
+    return render_template('viewApplication.html', rowdata=rowdata)
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST','GET'])
 @login_required
 def insertAss():
-    try:
-        if request.method == "POST":
-            secret_response = request.form['g-recaptcha-response']
+    if request.method == "POST":
+        secret_response = request.form['g-recaptcha-response']
 
-            verify_response = requests.post(url=f'{VERIFY_URL}?secret={SECRET_KEY}&response={secret_response}').json()
+        verify_response = requests.post(url=f'{VERIFY_URL}?secret={SECRET_KEY}&response={secret_response}').json()
 
-            if verify_response['success'] == False or verify_response['score'] < 0.5:
-
-
-                # Process the form data here
-                assDecType = request.form['assType']
-                assDecCat = request.form['assCat']
-                assDec = request.form['assDec']
-                assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
-                assOwner = request.form['assOwner']
-                assCert = request.form['assCert']
-                assDateOwn = request.form['assDateOwn']
-                assQuantity = request.form['assQuantity']
-                assMeasurement = request.form['assMeasurement']
-                assAcqVal = request.form['assAcqVal']
-                assCurVal = request.form['assCurVal']
-                assAcq = request.form['assAcq']
-                attchmnt = request.files['file']
-                filename = secure_filename(attchmnt.filename)
-                
-                print(assDec)
-                print(assDec.isalnum())
-                print(assDec.isalnum)
+        if verify_response['success'] == False or verify_response['score'] < 0.5:
 
 
-                if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
-                    conn = create_connection()
-                    cur = conn.cursor()
-                    cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
-                    conn.commit()
+            # Process the form data here
+            assDecType = request.form['assType']
+            assDecCat = request.form['assCat']
+            assDec = request.form['assDec']
+            assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
+            assOwner = request.form['assOwner']
+            assCert = request.form['assCert']
+            assDateOwn = request.form['assDateOwn']
+            assQuantity = request.form['assQuantity']
+            assMeasurement = request.form['assMeasurement']
+            assAcqVal = request.form['assAcqVal']
+            assCurVal = request.form['assCurVal']
+            assAcq = request.form['assAcq']
+            attchmnt = request.files['file']
+            filename = secure_filename(attchmnt.filename)
+            
+            print(assDec)
+            print(assDec.isalnum())
+            print(assDec.isalnum)
 
-                    os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
-                    attchmnt.save(os.path.join('static/attachment', filename))
 
-                    flash("Request to add asset sent!")
-                else:
-                    flash("Check your inputs!")
+            if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
+                conn = create_connection()
+                cur = conn.cursor()
+                cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
+                conn.commit()
+
+                os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
+                attchmnt.save(os.path.join('static/attachment', filename))
+
+                flash("Request to add asset sent!")
             else:
-                flash("Bot Detected!")
-                return redirect(url_for ('index'))
-    except:
-        flash("An Exception Occured!")
-    return render_template('loginPage.html')
+                flash("Check your inputs!")
+        else:
+            flash("Data Not Inserted!")
+        return redirect(url_for ('index'))
+    else:
+        return redirect(url_for ('index'))
 
 #-----------Login Page-----------
 @app.route('/loginPage')
