@@ -18,7 +18,7 @@
         </div>
         <div class="form-group">
             <label>Description:</label>
-            <input type="text" class="form-control" name="assDec" required="1" value="{{ asset_data['Description'] }}">
+            <input type="text" class="form-control" name="assDec" required="1" value="{{ asset_data['Description'] }}" pattern="^[a-zA-Z0-9\s]+$">
         </div>
         <div class="form-group">
             <label>Address:</label>
@@ -33,7 +33,7 @@
         </div>
         <div class="form-group">
             <label>Registration Cert No.:</label>
-            <input type="text" class="form-control" name="assCert" required="1" value="{{ asset_data['RegCertNo'] }}">
+            <input type="text" class="form-control" name="assCert" required="1" value="{{ asset_data['RegCertNo'] }}" pattern="^[a-zA-Z0-9\s]+$">
         </div>
         <div class="form-group">
             <label>Date of Ownership:</label>

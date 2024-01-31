@@ -178,36 +178,34 @@ def start():
 
 @login_required
 def adminPage():
-    conn = create_connection()
-    cur = conn.cursor()
-    # cur.execute("""
-    #     SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`, u.`fullname`
-    #     FROM `buffer` a
-    #     JOIN `user` u ON a.`userID` = u.`userID`
-    # """)
-    cur.execute("""
-        SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
-        FROM `buffer` a
-        JOIN `user` u ON a.`userID` = u.`userID`
-        WHERE a.`Status` = "Pending"
-    """)
-    pending = cur.fetchall()
-    cur.execute("""
-        SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
-        FROM `buffer` a
-        JOIN `user` u ON a.`userID` = u.`userID`
-        WHERE a.`Status` = "Approved"
-    """)
-    completed = cur.fetchall()
-    cur.close()
+    try:
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
+            FROM `buffer` a
+            JOIN `user` u ON a.`userID` = u.`userID`
+            WHERE a.`Status` = "Pending"
+        """)
+        pending = cur.fetchall()
+        cur.execute("""
+            SELECT a.`ReviewID`, a.`ReviewType`,  a.`AssetID`, u.`fullname`, a.`dateOfApp`, a.`AssDecType`, a.`AssDecCat`, a.`Description`
+            FROM `buffer` a
+            JOIN `user` u ON a.`userID` = u.`userID`
+            WHERE a.`Status` = "Approved"
+        """)
+        completed = cur.fetchall()
+        cur.close()
 
-    # # Group assets by fullname
-    # assets_by_fullname = {}
-    # for row in data:
-    #     fullname = row[5]  # Assuming fullname is at index 5
-    #     if fullname not in assets_by_fullname:
-    #         assets_by_fullname[fullname] = []
-    #     assets_by_fullname[fullname].append(row)
+        # # Group assets by fullname
+        # assets_by_fullname = {}
+        # for row in data:
+        #     fullname = row[5]  # Assuming fullname is at index 5
+        #     if fullname not in assets_by_fullname:
+        #         assets_by_fullname[fullname] = []
+        #     assets_by_fullname[fullname].append(row)
+    except:
+        flash("An Exception Occured!")
 
     return render_template('adminpage.html', review=pending, completed=completed)
 
@@ -217,28 +215,36 @@ def adminPage():
 @login_required
 def index():
 
-    user = session.get('username', None)
-    print(user)
-    conn = create_connection()
-    cur = conn.cursor()
-    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `assets` WHERE `userID` = ? """,(user,))
-    data = cur.fetchall()
-    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `buffer` WHERE `userID` = ? AND (`Status` = "Pending" OR `Status` = "Rejected") """,(user,))
-    pendingdata = cur.fetchall()
-    cur.close()
+    try:
+        user = session.get('username', None)
+        print(user)
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `assets` WHERE `userID` = ? """,(user,))
+        data = cur.fetchall()
+        cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `buffer` WHERE `userID` = ? AND (`Status` = "Pending" OR `Status` = "Rejected") """,(user,))
+        pendingdata = cur.fetchall()
+        cur.close()
+        return render_template('home.html', appnts=data, usrnm = user, pendingdata=pendingdata)
+    except:
+        flash("An Exception Occured!")
 
-    return render_template('home.html', appnts=data, usrnm = user, pendingdata=pendingdata)
+    return render_template('loginPage.html')
 
 #-----------View Assets-----------
 @app.route('/viewAss/<string:assID>',methods=['POST','GET'])
 @login_required
 def viewAss(assID):
-    conn = create_connection()
-    cur = conn.cursor()
-    cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? """,(assID,))
-    rowdata = cur.fetchone()
-    cur.close
-    return render_template('viewAss.html', rowdata=rowdata)
+    try:
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? """,(assID,))
+        rowdata = cur.fetchone()
+        cur.close
+        return render_template('viewAss.html', rowdata=rowdata)
+    except:
+        flash("An Exception Occured!")
+    return render_template('loginPage.html')
 
 #-----------View Buffer-----------
 @app.route('/viewBuffer/<string:assID>',methods=['POST','GET'])
@@ -311,7 +317,7 @@ def insertAss():
             filename = secure_filename(attchmnt.filename)
 
 
-            if formValidation(assCurVal, assAcqVal, assQuantity, desc):
+            if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
                 conn = create_connection()
                 cur = conn.cursor()
                 cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
@@ -320,7 +326,7 @@ def insertAss():
                 os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
                 attchmnt.save(os.path.join('static/attachment', filename))
 
-                flash("Data Inserted Successfully")
+                flash("Request to add asset sent!")
             else:
                 flash("Check your inputs!")
         else:
@@ -469,18 +475,21 @@ def performUpdateAss(assID):
     review = request.form['review']
     status = "Pending"
 
+    if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
     # Update the corresponding asset in the database
-    conn = create_connection()
-    cur = conn.cursor()
-    cur.execute ("UPDATE assets SET status = ? WHERE AssetID = ?", (status, assID))
-    conn.commit()
-    cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Edit", assID, session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, status, review))
-    conn.commit()
+        conn = create_connection()
+        cur = conn.cursor()
+        cur.execute ("UPDATE assets SET status = ? WHERE AssetID = ?", (status, assID))
+        conn.commit()
+        cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Edit", assID, session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, status, review))
+        conn.commit()
 
-    os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
-    attachment.save(os.path.join('static/attachment', filename))
+        os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
+        attachment.save(os.path.join('static/attachment', filename))
 
-    flash("Asset Updated Successfully")
+        flash("Update Request Sent!")
+    else:
+        flash("Check your inputs!")
 
     # Redirect to the view page for the updated asset or any other appropriate page
     return redirect(url_for('index', assID=assID))
@@ -724,7 +733,7 @@ def deleteAss(assID):
         cur = conn.cursor()
         cur.close()
 
-        flash("Asset Deleted Successfully")
+        flash("Deletion request sent")
     else:
         flash("Error: You don't have permission to delete this asset.")
 
