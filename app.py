@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from werkzeug.utils import secure_filename
 from flask_session import Session
 from sqlite3 import Error
+
 from datetime import date, datetime, timedelta
 import sqlite3
 import os
@@ -270,24 +271,42 @@ def viewApplciation(assID):
 @login_required
 def insertAss():
     if request.method == "POST":
-        assDecType = request.form['assType']
-        assDecCat = request.form['assCat']
-        assDec = request.form['assDec']
-        assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + ", " + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
-        assOwner = request.form['assOwner']
-        assCert = request.form['assCert']
-        assDateOwn = request.form['assDateOwn']
-        assQuantity = request.form['assQuantity']
-        assMeasurement = request.form['assMeasurement']
-        assAcqVal = request.form['assAcqVal']
-        assCurVal = request.form['assCurVal']
-        assAcq = request.form['assAcq']
+        # Get the reCAPTCHA response from the form
+        recaptcha_response = request.form['g-recaptcha-v3-response']
+
+        # Verify the reCAPTCHA response
+        recaptcha_data = {
+            'secret': '6LfaMWEpAAAAAPB932G61JU7Avky7STYGY8DD8UW',
+            'response': recaptcha_response
+        }
+        r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=recaptcha_data)
+        result = r.json()
+
+        # Get the file from the form
         attchmnt = request.files['file']
+
+        # Check the reCAPTCHA score
+        if result['success'] and result['score'] >= 0.5:
+            # Process the form data here
+            assDecType = request.form['assType']
+            assDecCat = request.form['assCat']
+            assDec = request.form['assDec']
+            assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
+            assOwner = request.form['assOwner']
+            assCert = request.form['assCert']
+            assDateOwn = request.form['assDateOwn']
+            assQuantity = request.form['assQuantity']
+            assMeasurement = request.form['assMeasurement']
+            assAcqVal = request.form['assAcqVal']
+            assCurVal = request.form['assCurVal']
+            assAcq = request.form['assAcq']
+            attchmnt = request.files['file']
+
         print("Filenmae Below")
         print(attchmnt)
         print(attchmnt.filename)
         print("filename above")
-        
+
         filename = secure_filename(attchmnt.filename)
         print("Filenmae Below")
         print(filename)
@@ -297,20 +316,20 @@ def insertAss():
         # cur = conn.cursor()
         # cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "pending", ""))
         # conn.commit()
-        
+
         conn = create_connection()
         cur = conn.cursor()
         cur.execute ("INSERT INTO buffer (reviewType, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Addition", session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, "Pending", ""))
         conn.commit()
-        
+
         os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
         attchmnt.save(os.path.join('static/attachment', filename))
-        
+
         flash("Data Inserted Successfully")
         return redirect(url_for ('index'))
     else:
         return redirect(url_for ('index'))
-    
+
 #-----------Login Page-----------
 @app.route('/loginPage')
 def loginPage():
@@ -482,7 +501,7 @@ def updateAss(assID):
         'Attachment': rowdata[15],
         'Review': rowdata[16],
         'Status': rowdata[17]
-        
+
     }
 
     return render_template('updateAss.html', asset_data=asset_data)
@@ -513,14 +532,14 @@ def performUpdateAss(assID):
     cur = conn.cursor()
     cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Edit", assID, session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, status, review))
     conn.commit()
-        
+
     os.makedirs('static/attachment', exist_ok=True)  # Create the directory if it doesn't exist
     attachment.save(os.path.join('static/attachment', filename))
 
     flash("Asset Updated Successfully")
 
     # Redirect to the view page for the updated asset or any other appropriate page
-    return redirect(url_for('index', assID=assID))  
+    return redirect(url_for('index', assID=assID))
 
 #----------Approve Request---------
 @app.route('/processApp/<string:appID>/<string:type>', methods=['POST','GET'])
@@ -537,32 +556,32 @@ def processApp(appID,type):
             cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
             bufferData = cur.fetchone()
             cur.close()
-        
+
             print("Got the info")
             review = request.form['review']
-        
+
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("INSERT INTO assets (userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review))
             conn.commit()
             cur.close()
-        
+
             print("Sent info")
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
             conn.commit()
             cur.close()
-        
-        
+
+
             conn = create_connection()
             cur = conn.cursor()
-        
+
 
             flash("Asset Added Successfully")
 
             # Redirect to the view page for the updated asset or any other appropriate page
-            return redirect(url_for('adminPage')) 
+            return redirect(url_for('adminPage'))
 
         elif(type=="Edit"):
             # Update the corresponding asset in the database
@@ -571,16 +590,16 @@ def processApp(appID,type):
             cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
             bufferData = cur.fetchone()
             cur.close()
-        
+
             print("Got the info")
             review = request.form['review']
-        
+
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("UPDATE assets SET userID = ?, dateOfApp = ?, AssDecType = ?, AssDecCat = ?, Description = ?, Address = ?, Owner = ?, RegCertNo = ?, DateOfOwnership = ?, Quantity = ?, Measurement = ?, AssAcqVal = ?, CurrAssVal = ?, AcqMethod = ?, attachment = ?, status = ?, review = ? WHERE AssetID = ?", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review, bufferData[2]))
             conn.commit()
             cur.close()
-        
+
             print("Sent info")
             conn = create_connection()
             cur = conn.cursor()
@@ -593,29 +612,29 @@ def processApp(appID,type):
             # Redirect to the view page for the updated asset or any other appropriate page
             return redirect(url_for('adminPage'))
         elif(type=="Deletion"):
-            
+
             conn = create_connection()
             cur = conn.cursor()
             cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
             bufferData = cur.fetchone()
             cur.close()
-            
+
             print("Got the info")
             review = request.form['review']
-            
+
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("DELETE FROM assets WHERE assetID = ?", (bufferData[2],))
             conn.commit()
             cur.close()
-        
+
             print("Sent info")
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
             conn.commit()
             cur.close()
-            
+
             return redirect(url_for('adminPage'))
         else:
             flash("Something went wrong")
@@ -630,26 +649,26 @@ def processApp(appID,type):
             cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
             bufferData = cur.fetchone()
             cur.close()
-        
+
             print("Got the info")
             review = request.form['review']
-        
+
             print("Sent info")
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("UPDATE buffer SET Status = ?, review =? where ReviewID = ?", ("Rejected", review, appID))
             conn.commit()
             cur.close()
-        
-        
+
+
             conn = create_connection()
             cur = conn.cursor()
-        
+
 
             flash("Asset Reviewed Successfully")
 
             # Redirect to the view page for the updated asset or any other appropriate page
-            return redirect(url_for('adminPage')) 
+            return redirect(url_for('adminPage'))
 
         else:
             flash("Something went wrong")
@@ -659,7 +678,7 @@ def processApp(appID,type):
         flash("Something went wrong")
         print("SHITTTTTTTTTT")
         return redirect(url_for('adminPage'))
-        
+
 #----------Reject Request---------
 @app.route('/rejectApp/<string:appID>/<string:type>', methods=['POST','GET'])
 @login_required
@@ -673,26 +692,26 @@ def rejectApp(appID,type):
         cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
         bufferData = cur.fetchone()
         cur.close()
-    
+
         print("Got the info")
         review = request.form['review']
-    
+
         print("Sent info")
         conn = create_connection()
         cur = conn.cursor()
         cur.execute ("UPDATE buffer SET Status = ?, review =? where ReviewID = ?", ("Rejected", review, appID))
         conn.commit()
         cur.close()
-    
-    
+
+
         conn = create_connection()
         cur = conn.cursor()
-    
+
 
         flash("Asset Reviewed Successfully")
 
         # Redirect to the view page for the updated asset or any other appropriate page
-        return redirect(url_for('adminPage')) 
+        return redirect(url_for('adminPage'))
 
     else:
         flash("Something went wrong")
@@ -709,27 +728,27 @@ def ApproveUpdate(appID):
     cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
     bufferData = cur.fetchone()
     cur.close()
-    
+
     print("Got the info")
     review = request.form['review']
-    
+
     conn = create_connection()
     cur = conn.cursor()
     cur.execute ("UPDATE assets SET userID = ?, dateOfApp = ?, AssDecType = ?, AssDecCat = ?, Description = ?, Address = ?, Owner = ?, RegCertNo = ?, DateOfOwnership = ?, Quantity = ?, Measurement = ?, AssAcqVal = ?, CurrAssVal = ?, AcqMethod = ?, attachment = ?, status = ?, review = ? WHERE AssetID = ?", (bufferData[3], bufferData[4], bufferData[5], bufferData[6], bufferData[7], bufferData[8], bufferData[9], bufferData[10], bufferData[11], bufferData[12], bufferData[13], bufferData[14], bufferData[15], bufferData[16], bufferData[17], "Approved", review, bufferData[2]))
     conn.commit()
     cur.close()
-    
+
     print("Sent info")
     conn = create_connection()
     cur = conn.cursor()
     cur.execute ("UPDATE buffer SET status = ?, review =? where ReviewID = ?", ("Approved", review, appID))
     conn.commit()
     cur.close()
-    
-    
+
+
     conn = create_connection()
     cur = conn.cursor()
-    
+
 
     flash("Asset Updated Successfully")
 
@@ -773,7 +792,7 @@ def deleteAss(assID):
     # In this example, I'm redirecting to the appropriate page based on the user's role.
     return redirect(url_for(redirect_page))
 
-        
+
 #-----------LogOut User-----------
 @app.route('/logout')
 @login_required
