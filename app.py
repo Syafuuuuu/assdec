@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 from werkzeug.utils import secure_filename
 from flask_session import Session
 from sqlite3 import Error
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import sqlite3
 import os
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
