@@ -19,6 +19,10 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg'}
 app = Flask (__name__)
 sess = Session()
 
+SITE_KEY = '6LfaMWEpAAAAAAoCokW7UkLPMxpAsNjRD6nzJmCJ'
+SECRET_KEY = '6LfaMWEpAAAAAPB932G61JU7Avky7STYGY8DD8UW'
+VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'loginPage'
@@ -295,43 +299,33 @@ def viewApplciation(assID):
 @app.route('/insertAss', methods = ['POST','GET'])
 @login_required
 def insertAss():
-    try:
-        if request.method == "POST":
-            # Get the reCAPTCHA response from the form
-            recaptcha_response = request.form['g-recaptcha-v3-response']
+    if request.method == "POST":
+        secret_response = request.form['g-recaptcha-response']
 
-            # Verify the reCAPTCHA response
-            recaptcha_data = {
-                'secret': '6LfaMWEpAAAAAPB932G61JU7Avky7STYGY8DD8UW',
-                'response': recaptcha_response
-            }
-            r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=recaptcha_data)
-            result = r.json()
+        verify_response = requests.post(url=f'{VERIFY_URL}?secret={SECRET_KEY}&response={secret_response}').json()
 
-            # Get the file from the form
+        if verify_response['success'] == False or verify_response['score'] < 0.5:
+
+
+            # Process the form data here
+            assDecType = request.form['assType']
+            assDecCat = request.form['assCat']
+            assDec = request.form['assDec']
+            assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
+            assOwner = request.form['assOwner']
+            assCert = request.form['assCert']
+            assDateOwn = request.form['assDateOwn']
+            assQuantity = request.form['assQuantity']
+            assMeasurement = request.form['assMeasurement']
+            assAcqVal = request.form['assAcqVal']
+            assCurVal = request.form['assCurVal']
+            assAcq = request.form['assAcq']
             attchmnt = request.files['file']
-
-            # Check the reCAPTCHA score
-            if result['success'] and result['score'] >= 0.5:
-                # Process the form data here
-                assDecType = request.form['assType']
-                assDecCat = request.form['assCat']
-                assDec = request.form['assDec']
-                assAddr = request.form['assAdd1'] + ", " + request.form['assAdd2'] + ", " + request.form['assPostCode'] + "," + request.form['assCity'] + ", " + request.form['assState'] + ", Malaysia"
-                assOwner = request.form['assOwner']
-                assCert = request.form['assCert']
-                assDateOwn = request.form['assDateOwn']
-                assQuantity = request.form['assQuantity']
-                assMeasurement = request.form['assMeasurement']
-                assAcqVal = request.form['assAcqVal']
-                assCurVal = request.form['assCurVal']
-                assAcq = request.form['assAcq']
-                attchmnt = request.files['file']
-                filename = secure_filename(attchmnt.filename)
-                
-                print(assDec)
-                print(assDec.isalnum())
-                print(assDec.isalnum)
+            filename = secure_filename(attchmnt.filename)
+            
+            print(assDec)
+            print(assDec.isalnum())
+            print(assDec.isalnum)
 
 
                 if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
