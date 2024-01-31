@@ -37,7 +37,7 @@ LOCKOUT_DURATION = timedelta(minutes=2)
 #region --------------Database Start--------------------
 
 def formValidation(currVal, AcqVal, Quant, desc):
-    if currVal>=1 and AcqVal>=1 and Quant>=1 and desc.isalnum():
+    if float(currVal)>=1 and float(AcqVal)>=1 and float(Quant)>=1 and desc.isalnum():
         return True
     else:
         return False
