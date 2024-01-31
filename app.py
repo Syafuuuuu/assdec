@@ -208,17 +208,13 @@ def load_user(user_id):
     cur.execute("SELECT * FROM user WHERE userID=?", (user_id,))
     user = cur.fetchone()
     if user:
-        return User(*user)
-    return None
+        return User(user[0], user[1], user[2])
 
-@login_manager.user_loader
-def load_user(admin_id):
-    conn = create_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM admin WHERE adminID=?", (admin_id,))
-    user = cur.fetchone()
-    if user:
-        return User(*user)
+    cur.execute("SELECT * FROM admin WHERE adminID=?", (user_id,))
+    admin = cur.fetchone()
+    if admin:
+       return User(admin[0], admin[1], admin[2])
+
     return None
 
 
