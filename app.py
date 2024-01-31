@@ -315,6 +315,10 @@ def insertAss():
             assAcq = request.form['assAcq']
             attchmnt = request.files['file']
             filename = secure_filename(attchmnt.filename)
+            
+            print(assDec)
+            print(assDec.isalnum())
+            print(assDec.isalnum)
 
 
             if formValidation(assCurVal, assAcqVal, assQuantity, assDec):
