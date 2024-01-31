@@ -54,6 +54,54 @@ def formValidation(currVal, AcqVal, Quant):
         return True
     else:
         return False
+    
+def decrypt(tupple, table):
+    if(table=="buffer"):
+        buffList = list(tupple)
+        buffList[7] = cipher.decrypt(buffList[7]).decode('utf8')
+        buffList[8] = cipher.decrypt(buffList[8]).decode('utf8')
+        buffList[10] = cipher.decrypt(buffList[10]).decode('utf8')
+        buffList[14] = cipher.decrypt(buffList[14]).decode('utf8')
+        buffList[15] = cipher.decrypt(buffList[15]).decode('utf8')
+        
+        decryptedTupple = tuple(buffList)
+        return decryptedTupple
+    elif(table=="assets"):
+        print(tupple)
+        assList = list(tupple)
+        print(assList)
+        assList[5] = cipher.decrypt(assList[5]).decode('utf8')
+        assList[6] = cipher.decrypt(assList[6]).decode('utf8')
+        assList[8] = cipher.decrypt(assList[8]).decode('utf8')
+        assList[12] = cipher.decrypt(assList[12]).decode('utf8')
+        assList[13] = cipher.decrypt(assList[13]).decode('utf8')
+        
+        decryptedTupple = tuple(assList)
+        return decryptedTupple
+    elif(table=="adminBuff"):
+        print("------------------WEEEE---------------")
+        print(tupple)
+        a = [list(item) for item in tupple] 
+        count = 0
+        for row in a:
+
+            a[count][7] = cipher.decrypt(a[count][7]).decode("utf8")
+            count = count + 1
+        decryptedA = tuple(a)
+        return decryptedA
+    elif(table=="userBuff"):
+        print("------------------WEEEE---------------")
+        print(tupple)
+        a = [list(item) for item in tupple] 
+        count = 0
+        for row in a:
+            a[count][4] = cipher.decrypt(a[count][4]).decode("utf8")
+            count = count + 1
+        decryptedA = tuple(a)
+        return decryptedA
+        
+        
+        
 
 # --- Database Connection ----
 def create_connection():
@@ -210,17 +258,10 @@ def adminPage():
         completed = cur.fetchall()
         cur.close()
 
-        # # Group assets by fullname
-        # assets_by_fullname = {}
-        # for row in data:
-        #     fullname = row[5]  # Assuming fullname is at index 5
-        #     if fullname not in assets_by_fullname:
-        #         assets_by_fullname[fullname] = []
-        #     assets_by_fullname[fullname].append(row)
     except:
         flash("An Exception Occured!")
 
-    return render_template('adminpage.html', review=pending, completed=completed)
+    return render_template('adminpage.html', review=decrypt(pending,"adminBuff"), completed=decrypt(completed,"adminBuff"))
 
 #-----------Home-----------
 
@@ -238,7 +279,7 @@ def index():
         cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `buffer` WHERE `userID` = ? AND (`Status` = "Pending" OR `Status` = "Rejected") """,(user,))
         pendingdata = cur.fetchall()
         cur.close()
-        return render_template('home.html', appnts=data, usrnm = user, pendingdata=pendingdata)
+        return render_template('home.html', appnts=decrypt(data,"userBuff"), usrnm = user, pendingdata=decrypt(pendingdata,"userBuff"))
     except:
         flash("An Exception Occured!")
 
@@ -254,10 +295,10 @@ def viewAss(assID):
         cur.execute("""SELECT * FROM `assets` WHERE `AssetID` = ? """,(assID,))
         rowdata = cur.fetchone()
         cur.close
-        return render_template('viewAss.html', rowdata=rowdata)
+        return render_template('viewAss.html', rowdata=decrypt(rowdata, "assets"))
     except:
         flash("An Exception Occured!")
-    return render_template('loginPage.html')
+        return render_template('loginPage.html')
 
 #-----------View Buffer-----------
 @app.route('/viewBuffer/<string:assID>',methods=['POST','GET'])
@@ -267,8 +308,12 @@ def viewBuffer(assID):
     cur = conn.cursor()
     cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
     rowdata = cur.fetchone()
+    print(rowdata)
+    
+    newRowData = decrypt(rowdata, "buffer")
+    
     cur.close
-    return render_template('viewBuffer.html', rowdata=rowdata)
+    return render_template('viewBuffer.html', rowdata=newRowData)
 
 #-----------View Buffer-----------
 @app.route('/viewComplete/<string:assID>',methods=['POST','GET'])
@@ -279,7 +324,7 @@ def viewComplete(assID):
     cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
     rowdata = cur.fetchone()
     cur.close
-    return render_template('viewComplete.html', rowdata=rowdata)
+    return render_template('viewComplete.html', rowdata=decrypt(rowdata,"buffer"))
 
 #-----------View Application-----------
 @app.route('/viewApplication/<string:assID>',methods=['POST','GET'])
@@ -290,7 +335,7 @@ def viewApplciation(assID):
     cur.execute("""SELECT * FROM `buffer` WHERE `ReviewID` = ? """,(assID,))
     rowdata = cur.fetchone()
     cur.close
-    return render_template('viewApplication.html', rowdata=rowdata)
+    return render_template('viewApplication.html', rowdata=decrypt(rowdata,"buffer"))
 
 #-----------Insert Assets-----------
 @app.route('/insertAss', methods = ['POST','GET'])
@@ -397,6 +442,9 @@ def login():
         cur = conn.cursor()
         cur.execute('SELECT `userID`, `email`, `password` FROM `user` WHERE `email` = ? AND `password` = ?', (email, password))
         user = cur.fetchone()
+        print("----------------- USER DEBUG ----------------")
+        print(user)
+        print("----------------- USER DEBUG ----------------")
         cur.execute('SELECT `adminID`, `email`, `password` FROM `admin` WHERE `email` = ? AND `password` = ?', (email, password))
         admin = cur.fetchone()
         cur.close()
@@ -451,15 +499,15 @@ def updateAss(assID):
         'AssetID': rowdata[0],
         'AssDecType': rowdata[3],
         'AssDecCat': rowdata[4],
-        'Description': rowdata[5],
-        'Address': rowdata[6],  # You may need to split the address into parts as needed
+        'Description': cipher.decrypt(rowdata[5]).decode("utf8"),
+        'Address': cipher.decrypt(rowdata[6]).decode("utf8"),  # You may need to split the address into parts as needed
         'Owner': rowdata[7],
-        'RegCertNo': rowdata[8],
+        'RegCertNo': cipher.decrypt(rowdata[8]).decode("utf8"),
         'DateOfOwnership': rowdata[8],
         'Quantity': rowdata[10],
         'Measurement': rowdata[11],
-        'AssAcqVal': rowdata[12],
-        'CurrAssVal': rowdata[13],
+        'AssAcqVal': cipher.decrypt(rowdata[12]).decode("utf8"),
+        'CurrAssVal': cipher.decrypt(rowdata[13]).decode("utf8"),
         'AcqMethod': rowdata[14],
         'Attachment': rowdata[15],
         'Review': rowdata[16],
@@ -632,6 +680,11 @@ def processApp(appID,type):
             conn = create_connection()
             cur = conn.cursor()
             cur.execute ("UPDATE buffer SET Status = ?, review =? where ReviewID = ?", ("Rejected", review, appID))
+            
+            cur.execute("""SELECT `AssetID` FROM `buffer` WHERE `ReviewID` = ? """,(appID,))
+            ResetAsset = cur.fetchone()
+            if ResetAsset != None:
+                cur.execute ("UPDATE assets SET Status = ? WHERE AssetID = ?", ("Approved", ResetAsset[0]))
             conn.commit()
             cur.close()
 
