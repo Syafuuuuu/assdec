@@ -453,6 +453,7 @@ def login():
             session['username'] = user[0]
             session['Log'] = True
             session['userType'] = "user"
+            print(session['username'])
             login_user(User(*user))
             return redirect(url_for('index'))
         elif admin:
