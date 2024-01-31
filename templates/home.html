@@ -29,6 +29,7 @@
             <th>Asset Declaration Type</th>
             <th>Asset Declaration Category</th>
             <th>Description</th>
+            <th>Status</th>
             <th>Action</th>
         </tr>
         {% for row in appnts %}
@@ -38,6 +39,7 @@
                 <td class="texttable">{{ row.2 }}</td>
                 <td class="texttable">{{ row.3 }}</td>
                 <td class="texttable">{{ row.4 }}</td>
+                <td class="texttable">{{ row.5 }}</td>
                 <td class="texttable">
                     <script>
                         function debugHref(element) {
@@ -46,11 +48,13 @@
                         }
                     </script>
                     <a href='/viewAss/{{ row.0 }}' class="btn btn-info btn- xs">View</a>
-                    <a href="{{ url_for('updateAss', assID=row.0) }}" class="btn btn-warning btn- xs"
+                    {% if row.5 != "Pending" %}
+                    <a href="{{ url_for('updateAss', assID=row.5) }}" class="btn btn-warning btn- xs"
                        data-toggle="modal"
                        data-target="">Edit</a>
                     <a href='/deleteAss/{{ row.0 }}' class="btn btn-danger btn- xs"
                        onclick="return confirm('Are You Sure For Delete?')">Delete</a>
+                    {% endif %}
                 </td>
             </tr>>
         {% endfor %}
@@ -66,6 +70,7 @@
             <th>Asset Declaration Type</th>
             <th>Asset Declaration Category</th>
             <th>Description</th>
+            <th>Status</th>
             <th>Action</th>
         </tr>
         {% for rows in pendingdata %}
@@ -75,6 +80,7 @@
                 <td class="texttable">{{ rows.2 }}</td>
                 <td class="texttable">{{ rows.3 }}</td>
                 <td class="texttable">{{ rows.4 }}</td>
+                <td class="texttable">{{ rows.5 }}</td>
                 <td class="texttable">
                     <script>
                         function debugHref(element) {
@@ -150,7 +156,7 @@
                         </div>
                         <div class="form-group">
                             <label>Quantity:</label>
-                            <input type="number" class="form-control" name="assQuantity" required="1">
+                            <input type="number" class="form-control" min="1" name="assQuantity" required="1">
                         </div>
                         <div class="form-group">
                             <label>Measurement:</label>
@@ -163,11 +169,11 @@
                         </div>
                         <div class="form-group">
                             <label>Asset Acquisition Value:</label>
-                            <input type="number" class="form-control" name="assAcqVal" required="1">
+                            <input type="number" min="1" class="form-control" name="assAcqVal" required="1">
                         </div>
                         <div class="form-group">
                             <label>Current Asset Value (Estimate):</label>
-                            <input type="number" class="form-control" name="assCurVal" required="1">
+                            <input type="number" min="1" class="form-control" name="assCurVal" required="1">
                         </div>
                         <div class="form-group">
                             <label>Acquisition Method:</label>

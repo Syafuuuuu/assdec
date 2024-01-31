@@ -214,9 +214,9 @@ def index():
     print(user)
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `assets` WHERE `userID` = ? """,(user,))
+    cur.execute("""SELECT `AssetID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `assets` WHERE `userID` = ? """,(user,))
     data = cur.fetchall()
-    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description` FROM `buffer` WHERE `userID` = ? AND (`Status` = "Pending" OR `Status` = "Rejected") """,(user,))
+    cur.execute("""SELECT `ReviewID`,`dateOfApp`,`AssDecType`,`AssDecCat`,`Description`, `Status` FROM `buffer` WHERE `userID` = ? AND (`Status` = "Pending" OR `Status` = "Rejected") """,(user,))
     pendingdata = cur.fetchall()
     cur.close()
 
@@ -301,6 +301,10 @@ def insertAss():
             assCurVal = request.form['assCurVal']
             assAcq = request.form['assAcq']
             attchmnt = request.files['file']
+            
+            print(assDecCat)
+            print(assDec)
+            print(assAddr)
 
         print("Filenmae Below")
         print(attchmnt)
@@ -530,6 +534,8 @@ def performUpdateAss(assID):
     # Update the corresponding asset in the database
     conn = create_connection()
     cur = conn.cursor()
+    cur.execute ("UPDATE assets SET status = ? WHERE AssetID = ?", (status, assID))
+    conn.commit()
     cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Edit", assID, session.get('username', None), str(date.today()), assDecType, assDecCat, assDec, assAddr, assOwner, assCert, assDateOwn, assQuantity, assMeasurement, assAcqVal, assCurVal, assAcq, filename, status, review))
     conn.commit()
 
@@ -771,6 +777,8 @@ def deleteAss(assID):
     if rowdata:
         # Delete the asset
         # Update the corresponding asset in the database
+        cur.execute ("UPDATE assets SET status = ? WHERE AssetID = ?", ("Pending", assID))
+        conn.commit()
         cur.execute ("INSERT INTO buffer (reviewType, AssetID, userID, dateOfApp, AssDecType, AssDecCat, Description, Address, Owner, RegCertNo, DateOfOwnership, Quantity, Measurement, AssAcqVal, CurrAssVal, AcqMethod, attachment, status, review) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ("Deletion", assID, session.get('username', None), rowdata[2], rowdata[3], rowdata[4], rowdata[5], rowdata[6], rowdata[7], rowdata[8], rowdata[9], rowdata[10], rowdata[11], rowdata[12], rowdata[13], rowdata[14], rowdata[15], "Pending", rowdata[16]))
         conn.commit()
         # cur.execute("""DELETE FROM `assets` WHERE `AssetID` = ?""", (assID,))
